@@ -13,6 +13,10 @@ AgentRunProof v0.1 targets `openai-agents` 0.20.x on Python 3.10–3.14. Built-i
 - consumption of each deterministic model script;
 - selected public `RunState` transitions: JSON transport, `from_json()` reconstruction, restored-state equality, interruption identities, and exact approve/reject decisions;
 - direct sibling-`RunState` approval isolation from repeated `RunResult.to_state()` calls;
+- recursive approval routing through two `Agent.as_tool` checkpoints while preserving an untouched
+  direct sibling state;
+- recursive approval routing after a public `RunState.to_json()` / `RunState.from_json()` boundary,
+  with one exact approval applied to the restored interruption;
 - per-phase tool-count deltas, scenario probes, and replay of persisted tool history.
 
 The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
@@ -45,6 +49,37 @@ that untouched state executes the protected tool. The certificate records
 effect. This adjacent gap was reported on upstream PR
 [#4409](https://github.com/openai/openai-agents-python/pull/4409#issuecomment-5291724795);
 the report is not a claim that #4409 introduced the bug.
+
+The recursive routing probe exercises the remaining boundary after upstream #4413:
+
+```bash
+agentrunproof probe runstate-recursive-agent-tool-approval-routing \
+  --certificate build/runstate-recursive-approval.json
+agentrunproof check-certificate build/runstate-recursive-approval.json
+```
+
+It pauses a protected effect behind two `Agent.as_tool` edges, creates two direct sibling states,
+approves only one flattened interruption, and resumes both branches. On upstream commit `0b93ce8`,
+the untouched sibling correctly remains pending but the approved sibling also remains interrupted;
+the focused result is
+`recursive_approval_routing: APPROVED_NESTED_STATE_REMAINED_INTERRUPTED`. A corrected runtime must
+finish the approved branch with exactly one effect in both runner modes while leaving the untouched
+branch at zero effects.
+
+The serialized-routing probe checks the durable form of the same contract:
+
+```bash
+agentrunproof probe runstate-recursive-agent-tool-approval-serialization \
+  --certificate build/runstate-recursive-approval-serialization.json
+agentrunproof check-certificate build/runstate-recursive-approval-serialization.json
+```
+
+The initial head of upstream PR #4414 (`9dc7da9`) fixed the live path but remained interrupted after
+JSON restoration. The revised head `1725a898` passes the built-in restored-approval scenario in both
+runner modes and was squash-merged as `50d65f65`; the upstream 24-case regression also covers
+approval and rejection before and after restoration across two and three nested edges. These commit
+observations remain development evidence until a clean comparison bundle pins that final merged
+revision.
 
 For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The built-in scenario and the two multi-phase historical scenarios are executable examples.
 
@@ -81,7 +116,11 @@ The private profile prevents raw observed payloads from being serialized, but va
 
 The exact release gates and exclusions are in the [project charter](https://github.com/FU-max-boop/agentrunproof/blob/main/PROJECT_CHARTER.md). The [execution plan](https://github.com/FU-max-boop/agentrunproof/blob/main/PLAN.md) tracks the completed historical release and the current upstream counterexample.
 
-AgentRunProof is seeking evidence-backed adoption: a conventional upstream reproducer, optional CI fixture, or documentation reference—not a default SDK dependency.
+AgentRunProof earned its first maintainer-level recognition when OpenAI Agents follow-up
+[#4413](https://github.com/openai/openai-agents-python/pull/4413) cited the reported checkpoint
+isolation defect. The next adoption target is reuse of the recursive regression fixture, an
+optional CI check, or a documentation reference—not a default SDK dependency. A community-tool
+entry was [proposed on the official v0.21 testing-guide PR](https://github.com/openai/openai-agents-python/pull/4381#issuecomment-5293600461). The maintainer [kept that guide limited to SDK-maintained APIs](https://github.com/openai/openai-agents-python/pull/4381#issuecomment-5293704972) while explicitly welcoming future reproducible findings backed by the tool. AgentRunProof therefore remains an external project rather than an official SDK listing or dependency.
 
 ## License
 

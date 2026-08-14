@@ -147,6 +147,8 @@ def _phase_contract(phase: ScenarioPhase, *, public_payloads: bool) -> PhaseCont
             }
             for decision in (resume.sibling_decisions if resume is not None else ())
         ),
+        save_sibling_state=resume.save_sibling_state if resume is not None else False,
+        saved_sibling_from=resume.saved_sibling_from if resume is not None else None,
     )
 
 
@@ -174,6 +176,7 @@ async def _run_plan_variant(
     plan: ScenarioPlan,
 ) -> Observation:
     phase_results: dict[str, RuntimeResult | None] = {}
+    saved_sibling_states: dict[str, RunState[Any]] = {}
     phase_observations: list[PhaseObservation] = []
     for phase in plan.phases:
         observation, result = await _run_phase(
@@ -181,6 +184,7 @@ async def _run_plan_variant(
             variant=variant,
             phase=phase,
             phase_results=phase_results,
+            saved_sibling_states=saved_sibling_states,
         )
         phase_results[phase.phase_id] = result
         phase_observations.append(observation)
@@ -193,6 +197,7 @@ async def _run_phase(
     variant: RunVariant,
     phase: ScenarioPhase,
     phase_results: dict[str, RuntimeResult | None],
+    saved_sibling_states: dict[str, RunState[Any]],
 ) -> tuple[PhaseObservation, RuntimeResult | None]:
     result: RuntimeResult | None = None
     error: BaseException | None = None
@@ -233,6 +238,7 @@ async def _run_phase(
             input_value, transition = await _resolve_input(
                 phase=phase,
                 phase_results=phase_results,
+                saved_sibling_states=saved_sibling_states,
             )
         except Exception as caught:
             error = caught
@@ -334,6 +340,7 @@ async def _resolve_input(
     *,
     phase: ScenarioPhase,
     phase_results: dict[str, RuntimeResult | None],
+    saved_sibling_states: dict[str, RunState[Any]],
 ) -> tuple[Any, dict[str, JsonValue]]:
     if isinstance(phase.input, LiteralInput):
         return phase.input.value, _empty_transition(phase)
@@ -344,14 +351,31 @@ async def _resolve_input(
         raise ScenarioTransitionError(
             f"Resume source phase {resume.source_phase!r} did not produce a RunResult."
         )
-    source_state = source_result.to_state()
-    source_ids = [_raw_interruption_call_id(item) for item in source_state.get_interruptions()]
+    saved_sibling_state_sha256: str | None = None
+    sibling_state_saved = False
+    if resume.saved_sibling_from is not None:
+        source_interruptions = list(getattr(source_result, "interruptions", []) or [])
+        source_ids = [_raw_interruption_call_id(item) for item in source_interruptions]
+        try:
+            state = saved_sibling_states.pop(resume.saved_sibling_from)
+        except KeyError as error:
+            raise ScenarioTransitionError(
+                f"Saved sibling phase {resume.saved_sibling_from!r} has no available RunState."
+            ) from error
+        source_state: RunState[Any] | None = None
+        saved_sibling_state_sha256 = sha256_hex(state.to_json())
+    else:
+        source_state = source_result.to_state()
+        source_ids = [_raw_interruption_call_id(item) for item in source_state.get_interruptions()]
+        state = source_state
     subject_state_before_sha256: str | None = None
     subject_state_after_sha256: str | None = None
     subject_state_unchanged: bool | None = None
     sibling_ids: list[str | None] = []
     actual_sibling_decisions: list[dict[str, JsonValue]] = []
     if resume.sibling_decisions:
+        if source_state is None:
+            raise ScenarioTransitionError("A saved sibling state cannot create another state fork.")
         sibling_state = source_result.to_state()
         sibling_interruptions = list(sibling_state.get_interruptions())
         sibling_ids = [_raw_interruption_call_id(item) for item in sibling_interruptions]
@@ -364,10 +388,20 @@ async def _resolve_input(
         )
         subject_state_after_sha256 = sha256_hex(source_state.to_json())
         subject_state_unchanged = subject_state_before_sha256 == subject_state_after_sha256
+        if resume.save_sibling_state:
+            if phase.phase_id in saved_sibling_states:
+                raise ScenarioTransitionError(
+                    f"Phase {phase.phase_id!r} already saved a sibling RunState."
+                )
+            saved_sibling_state_sha256 = sha256_hex(sibling_state.to_json())
+            saved_sibling_states[phase.phase_id] = sibling_state
+            sibling_state_saved = True
     round_trip_equal: bool | None = None
     restored_state_equal: bool | None = None
     state_schema_version: str | None = None
     if resume.json_round_trip:
+        if source_state is None:
+            raise ScenarioTransitionError("A saved sibling state cannot use a JSON round trip.")
         state_json = source_state.to_json()
         encoded = json.dumps(
             state_json,
@@ -382,7 +416,7 @@ async def _resolve_input(
         state_schema_version = raw_schema_version if isinstance(raw_schema_version, str) else None
         state = await RunState.from_json(phase.agent, restored_json)
         restored_state_equal = state.to_json() == state_json
-    else:
+    elif source_state is not None:
         state = source_state
     restored = list(state.get_interruptions())
     restored_ids = [_raw_interruption_call_id(item) for item in restored]
@@ -408,6 +442,14 @@ async def _resolve_input(
         "sibling_interruption_call_ids": [_identifier_digest(value) for value in sibling_ids],
         "sibling_decisions": cast(list[JsonValue], actual_sibling_decisions),
     }
+    if resume.save_sibling_state or resume.saved_sibling_from is not None:
+        transition.update(
+            {
+                "sibling_state_saved": sibling_state_saved,
+                "saved_sibling_from": resume.saved_sibling_from,
+                "saved_sibling_state_sha256": saved_sibling_state_sha256,
+            }
+        )
     return state, transition
 
 
@@ -415,7 +457,7 @@ def _empty_transition(phase: ScenarioPhase) -> dict[str, JsonValue]:
     kind = "resume" if isinstance(phase.input, ResumeInput) else "literal"
     source = phase.input.source_phase if isinstance(phase.input, ResumeInput) else None
     requested = phase.input.json_round_trip if isinstance(phase.input, ResumeInput) else False
-    return {
+    transition: dict[str, JsonValue] = {
         "kind": kind,
         "source_phase": source,
         "json_round_trip_requested": requested,
@@ -431,6 +473,17 @@ def _empty_transition(phase: ScenarioPhase) -> dict[str, JsonValue]:
         "sibling_interruption_call_ids": [],
         "sibling_decisions": [],
     }
+    if isinstance(phase.input, ResumeInput) and (
+        phase.input.save_sibling_state or phase.input.saved_sibling_from is not None
+    ):
+        transition.update(
+            {
+                "sibling_state_saved": False,
+                "saved_sibling_from": phase.input.saved_sibling_from,
+                "saved_sibling_state_sha256": None,
+            }
+        )
+    return transition
 
 
 def _apply_decisions(

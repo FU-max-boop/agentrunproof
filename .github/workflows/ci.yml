@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      upstream_target_commit:
+        description: "Optional 40-character OpenAI Agents commit for a canonical comparison candidate"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -404,5 +409,221 @@ jobs:
         with:
           name: current-evidence-${{ github.sha }}
           path: build/current-ci/*
+          if-no-files-found: error
+          retention-days: 30
+
+  upstream-comparison:
+    name: Upstream comparison contract and reproduction
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    needs: [test, quality]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12.13"
+          cache: pip
+      - name: Install evidence tooling
+        run: python -m pip install --disable-pip-version-check -e '.[test,dev]'
+      - name: Exercise the extensible comparison contract
+        run: |
+          python -m pytest -q \
+            tests/test_current_comparison.py \
+            tests/test_upstream_comparison_generator.py
+      - name: Reproduce committed comparison evidence when present
+        id: reproduce
+        shell: bash
+        env:
+          INPUT_UPSTREAM_TARGET_COMMIT: ${{ inputs.upstream_target_commit }}
+        run: |
+          set -euo pipefail
+          committed_bundle="evidence/upstream-comparison/v1/bundle.json"
+          if [[ ! -f "$committed_bundle" ]]; then
+            target_commit="$INPUT_UPSTREAM_TARGET_COMMIT"
+            if [[ -z "$target_commit" ]]; then
+              echo "No canonical upstream comparison is committed; generation remains deferred."
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            test "$GITHUB_REF" = refs/heads/main
+            [[ "$target_commit" =~ ^[0-9a-f]{40}$ ]]
+            target_id="openai-agents-python-${target_commit:0:8}"
+            upstream_clone="$RUNNER_TEMP/openai-agents-python"
+            git clone --filter=blob:none --no-checkout \
+              https://github.com/openai/openai-agents-python.git "$upstream_clone"
+            git -C "$upstream_clone" fetch origin \
+              0b93ce8faa27d4631df399fe48856b52a8fd9897 \
+              "$target_commit"
+            baseline_checkout="$RUNNER_TEMP/upstream-openai-agents-python-0b93ce8"
+            target_checkout="$RUNNER_TEMP/upstream-$target_id"
+            git -C "$upstream_clone" worktree add --detach \
+              "$baseline_checkout" 0b93ce8faa27d4631df399fe48856b52a8fd9897
+            git -C "$upstream_clone" worktree add --detach \
+              "$target_checkout" "$target_commit"
+            python scripts/run_upstream_comparison.py \
+              --canonical \
+              --source-commit "$GITHUB_SHA" \
+              --upstream-checkout "$baseline_checkout" \
+              --additional-upstream-checkout "$target_id=$target_checkout" \
+              --additional-run \
+                "candidate-recursive,$target_id,runstate-recursive-agent-tool-approval-routing,PASS,candidate-recursive-certificate.json" \
+              --additional-run \
+                "candidate-serialized,$target_id,runstate-recursive-agent-tool-approval-serialization,PASS,candidate-serialized-certificate.json" \
+              --additional-run \
+                "candidate-top-level,$target_id,runstate-sibling-approval-isolation,PASS,candidate-top-level-certificate.json" \
+              --output-directory build/upstream-comparison-ci
+            python -m agentrunproof check-upstream-bundle \
+              build/upstream-comparison-ci/bundle.json
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          committed_directory="$(dirname "$committed_bundle")"
+          python -m agentrunproof check-upstream-bundle "$committed_bundle"
+
+          python - "$committed_bundle" > "$RUNNER_TEMP/comparison-metadata" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          bundle_path = Path(sys.argv[1])
+          bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+          print("SOURCE", bundle["source"]["commit"], bundle["source"]["tree"], sep="\t")
+          for target in bundle["targets"][1:]:
+              print("TARGET", target["target_id"], target["commit"], sep="\t")
+          for run in bundle["runs"][3:]:
+              fields = (
+                  run["run_id"],
+                  run["target_id"],
+                  run["scenario_id"],
+                  run["expected_status"],
+                  run["certificate"]["path"],
+              )
+              if any("," in field or "\t" in field or "\n" in field for field in fields):
+                  raise SystemExit("comparison run metadata is not shell-safe")
+              print("RUN", ",".join(fields), sep="\t")
+          for run in bundle["runs"]:
+              print("MEMBER", run["certificate"]["path"], sep="\t")
+          PY
+
+          IFS=$'\t' read -r kind source_commit source_tree < "$RUNNER_TEMP/comparison-metadata"
+          test "$kind" = SOURCE
+          mapfile -t evidence_additions < <(
+            git log --diff-filter=A --format=%H -- "$committed_bundle"
+          )
+          test "${#evidence_additions[@]}" -eq 1
+          evidence_commit="${evidence_additions[0]}"
+          git merge-base --is-ancestor "$evidence_commit" HEAD
+          read -r -a evidence_parent_fields <<< "$(
+            git rev-list --parents -n 1 "$evidence_commit"
+          )"
+          test "${#evidence_parent_fields[@]}" -eq 2
+          evidence_parent="${evidence_parent_fields[1]}"
+          git merge-base --is-ancestor "$source_commit" "$evidence_parent"
+          test "$(git rev-parse "$source_commit^{tree}")" = "$source_tree"
+
+          python - "$committed_bundle" > "$RUNNER_TEMP/expected-upstream-evidence-files" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          bundle_path = Path(sys.argv[1])
+          bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+          paths = [bundle_path, *(bundle_path.parent / run["certificate"]["path"] for run in bundle["runs"])]
+          print("\n".join(sorted(str(path) for path in paths)))
+          PY
+          git diff --name-only "$evidence_parent..$evidence_commit" | sort \
+            > "$RUNNER_TEMP/actual-upstream-evidence-files"
+          diff -u \
+            "$RUNNER_TEMP/expected-upstream-evidence-files" \
+            "$RUNNER_TEMP/actual-upstream-evidence-files"
+          git diff --exit-code "$evidence_commit" HEAD -- "$committed_directory"
+
+          upstream_clone="$RUNNER_TEMP/openai-agents-python"
+          git clone --filter=blob:none --no-checkout \
+            https://github.com/openai/openai-agents-python.git "$upstream_clone"
+          baseline_checkout=""
+          generator_args=()
+          while IFS=$'\t' read -r record target_id target_commit; do
+            [[ "$record" = TARGET ]] || continue
+            git -C "$upstream_clone" fetch origin "$target_commit"
+            target_checkout="$RUNNER_TEMP/upstream-$target_id"
+            git -C "$upstream_clone" worktree add --detach "$target_checkout" "$target_commit"
+            if [[ "$target_id" = openai-agents-python-0b93ce8 ]]; then
+              baseline_checkout="$target_checkout"
+            else
+              generator_args+=(--additional-upstream-checkout "$target_id=$target_checkout")
+            fi
+          done < "$RUNNER_TEMP/comparison-metadata"
+          test -n "$baseline_checkout"
+          while IFS=$'\t' read -r record run_spec; do
+            [[ "$record" = RUN ]] || continue
+            generator_args+=(--additional-run "$run_spec")
+          done < "$RUNNER_TEMP/comparison-metadata"
+
+          source_worktree="$RUNNER_TEMP/agentrunproof-upstream-source"
+          git worktree add --detach "$source_worktree" "$source_commit"
+          python -m pip install \
+            --disable-pip-version-check \
+            --force-reinstall \
+            --no-deps \
+            -e "$source_worktree"
+          (
+            cd "$source_worktree"
+            python scripts/run_upstream_comparison.py \
+              --canonical \
+              --source-commit "$source_commit" \
+              --upstream-checkout "$baseline_checkout" \
+              --output-directory build/upstream-comparison-ci \
+              "${generator_args[@]}"
+          )
+          generated_directory="$source_worktree/build/upstream-comparison-ci"
+          python -m agentrunproof check-upstream-bundle "$generated_directory/bundle.json"
+          cmp "$generated_directory/bundle.json" "$GITHUB_WORKSPACE/$committed_bundle"
+          while IFS=$'\t' read -r record member; do
+            [[ "$record" = MEMBER ]] || continue
+            cmp \
+              "$generated_directory/$member" \
+              "$GITHUB_WORKSPACE/$committed_directory/$member"
+          done < "$RUNNER_TEMP/comparison-metadata"
+          mkdir -p build/upstream-comparison-ci
+          cp "$generated_directory"/* build/upstream-comparison-ci/
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Download release-candidate distributions
+        if: steps.reproduce.outputs.ready == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions
+          path: build/distributions
+      - name: Bind the release wheel to the reproduced harness wheel
+        if: steps.reproduce.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_commit="$(python - <<'PY'
+          import json
+          print(json.load(open(
+              "build/upstream-comparison-ci/bundle.json",
+              encoding="utf-8",
+          ))["source"]["commit"])
+          PY
+          )"
+          if git diff --quiet "$source_commit..HEAD" -- \
+            LICENSE README.md pyproject.toml src/agentrunproof; then
+            release_wheels=(build/distributions/agentrunproof-*.whl)
+            comparison_wheels=(build/upstream-comparison-ci/agentrunproof-*.whl)
+            test "${#release_wheels[@]}" -eq 1
+            test "${#comparison_wheels[@]}" -eq 1
+            cmp "${release_wheels[0]}" "${comparison_wheels[0]}"
+          else
+            echo "Package inputs differ from the immutable comparison source; wheel binding skipped."
+          fi
+      - name: Upload reproduced canonical upstream comparison
+        if: steps.reproduce.outputs.ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: upstream-comparison-${{ github.sha }}
+          path: build/upstream-comparison-ci/*
           if-no-files-found: error
           retention-days: 30

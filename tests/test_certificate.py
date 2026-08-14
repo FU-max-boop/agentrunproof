@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import subprocess
+import sys
 from collections.abc import Callable
 from dataclasses import replace
+from pathlib import Path
 
 import jsonschema
 import pytest
 
 from agentrunproof.builtins import (
+    RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING,
     RUNSTATE_SIBLING_APPROVAL_ISOLATION,
 )
 from agentrunproof.certificate import (
@@ -33,6 +37,43 @@ _STATE_FORK_TRANSITION_FIELDS = (
     "sibling_interruption_call_ids",
     "sibling_decisions",
 )
+_SAVED_SIBLING_TRANSITION_FIELDS = (
+    "sibling_state_saved",
+    "saved_sibling_from",
+    "saved_sibling_state_sha256",
+)
+
+
+def _recursive_certificate_in_subprocess(path: Path, *, public_payloads: bool) -> dict:
+    script = """
+import asyncio
+import sys
+from dataclasses import replace
+from pathlib import Path
+
+from agentrunproof.builtins import RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING
+from agentrunproof.certificate import build_certificate, write_certificate
+from agentrunproof.engine import run_scenario
+
+scenario = replace(
+    RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING,
+    public_payloads=sys.argv[2] == "public",
+)
+certificate = build_certificate(asyncio.run(run_scenario(scenario)))
+write_certificate(Path(sys.argv[1]), certificate)
+"""
+    environment = dict(os.environ)
+    source = str(Path.cwd() / "src")
+    environment["PYTHONPATH"] = os.pathsep.join(
+        value for value in (source, environment.get("PYTHONPATH")) if value
+    )
+    subprocess.run(
+        [sys.executable, "-c", script, str(path), "public" if public_payloads else "private"],
+        check=True,
+        cwd=Path.cwd(),
+        env=environment,
+    )
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 @pytest.mark.asyncio
@@ -78,6 +119,67 @@ async def test_state_fork_fields_preserve_private_certificate_redaction() -> Non
     jsonschema.validate(certificate, schema)
 
 
+def test_recursive_approval_branch_is_bound_in_a_valid_public_certificate(
+    tmp_path: Path,
+) -> None:
+    certificate = _recursive_certificate_in_subprocess(
+        tmp_path / "recursive-public.json",
+        public_payloads=True,
+    )
+    contracts = certificate["scenario"]["phase_contracts"]["non_streaming"]
+    non_streaming_phases = certificate["observations"]["non_streaming"]["phases"]
+    fork_transition = non_streaming_phases[1]["state_transition"]
+    approved_phase = non_streaming_phases[2]
+    approved_transition = approved_phase["state_transition"]
+    routing = next(
+        result
+        for result in certificate["invariants"]
+        if result["name"] == "recursive_approval_routing"
+    )
+
+    assert contracts[1]["save_sibling_state"] is True
+    assert contracts[2]["saved_sibling_from"] == "untouched-sibling"
+    assert non_streaming_phases[0]["interruption_count"] == 1
+    assert non_streaming_phases[1]["interruption_count"] == 1
+    assert non_streaming_phases[1]["tool_counts_delta"] == {"protected_effect": 0}
+    assert fork_transition["sibling_state_saved"] is True
+    assert approved_transition["saved_sibling_from"] == "untouched-sibling"
+    assert (
+        approved_transition["saved_sibling_state_sha256"]
+        == (fork_transition["saved_sibling_state_sha256"])
+    )
+    if approved_phase["interruption_count"] == 0:
+        assert approved_phase["final_output"] == "outer complete"
+        assert approved_phase["tool_counts_delta"] == {"protected_effect": 1}
+        assert approved_phase["probes_after"]["protected_effects"] == ["committed-once"]
+    else:
+        assert approved_phase["interruption_count"] == 1
+        assert approved_phase["tool_counts_delta"] == {"protected_effect": 0}
+        assert routing["details"]["non_streaming"]["reason"] == (
+            "APPROVED_NESTED_STATE_REMAINED_INTERRUPTED"
+        )
+    validate_certificate(certificate)
+    schema = json.loads(schema_path().read_text(encoding="utf-8"))
+    jsonschema.validate(certificate, schema)
+
+
+def test_recursive_approval_branch_preserves_private_certificate_redaction(
+    tmp_path: Path,
+) -> None:
+    certificate = _recursive_certificate_in_subprocess(
+        tmp_path / "recursive-private.json",
+        public_payloads=False,
+    )
+    rendered = certificate_json(certificate)
+
+    assert "agentrunproof-recursive-protected-call-1" not in rendered
+    assert "protected_effect" not in rendered
+    assert "untouched-sibling" not in rendered
+    validate_certificate(certificate)
+    schema = json.loads(schema_path().read_text(encoding="utf-8"))
+    jsonschema.validate(certificate, schema)
+
+
 @pytest.mark.asyncio
 async def test_certificate_v1_still_accepts_the_original_optional_field_shape() -> None:
     import agentrunproof.certificate as certificate_module
@@ -86,11 +188,15 @@ async def test_certificate_v1_still_accepts_the_original_optional_field_shape() 
     for contracts in certificate["scenario"]["phase_contracts"].values():
         for contract in contracts:
             contract.pop("sibling_decisions")
+            contract.pop("save_sibling_state", None)
+            contract.pop("saved_sibling_from", None)
     for observation in certificate["observations"].values():
         for phase in observation["phases"]:
             transition = phase["state_transition"]
             for field in _STATE_FORK_TRANSITION_FIELDS:
                 transition.pop(field)
+            for field in _SAVED_SIBLING_TRANSITION_FIELDS:
+                transition.pop(field, None)
     certificate["scenario"]["normalized_input_sha256"] = (
         certificate_module._normalized_input_digest(
             scenario_id=certificate["scenario"]["id"],
@@ -501,6 +607,22 @@ async def test_readdressing_cannot_hide_forged_state_fork_isolation() -> None:
     observed = transition["subject_state_unchanged"]
     assert isinstance(observed, bool)
     transition["subject_state_unchanged"] = not observed
+    forged["certificate_id"] = certificate_module._certificate_id(forged)
+
+    with pytest.raises(CertificateError, match="recomputed observations"):
+        validate_certificate(forged)
+
+
+@pytest.mark.asyncio
+async def test_readdressing_cannot_rebind_a_saved_approval_branch() -> None:
+    import agentrunproof.certificate as certificate_module
+
+    certificate = build_certificate(
+        await run_scenario(RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING)
+    )
+    forged = copy.deepcopy(certificate)
+    transition = forged["observations"]["non_streaming"]["phases"][2]["state_transition"]
+    transition["saved_sibling_state_sha256"] = "0" * 64
     forged["certificate_id"] = certificate_module._certificate_id(forged)
 
     with pytest.raises(CertificateError, match="recomputed observations"):

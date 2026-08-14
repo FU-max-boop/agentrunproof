@@ -33,8 +33,8 @@ Homepage = "https://github.com/FU-max-boop/agentrunproof"
 Repository = "https://github.com/FU-max-boop/agentrunproof"
 Issues = "https://github.com/FU-max-boop/agentrunproof/issues"
 Changelog = "https://github.com/FU-max-boop/agentrunproof/blob/main/CHANGELOG.md"
-Documentation = "https://github.com/FU-max-boop/agentrunproof#readme"
-Evidence = "https://github.com/FU-max-boop/agentrunproof/tree/main/evidence/history/v1"
+Documentation = "https://github.com/FU-max-boop/agentrunproof/blob/main/docs/openai-agents.md"
+Evidence = "https://github.com/FU-max-boop/agentrunproof/tree/main/evidence"
 
 [project.scripts]
 agentrunproof = "agentrunproof.cli:main"
@@ -58,11 +58,15 @@ packages = ["src/agentrunproof"]
 [tool.hatch.build.targets.sdist]
 include = [
   "/CHANGELOG.md",
+  "/docs/openai-agents.md",
   "/LICENSE",
   "/README.md",
   "/pyproject.toml",
   "/requirements/history/**",
+  "/requirements/upstream/**",
+  "/scripts/run_current_certificate.py",
   "/scripts/run_history_matrix.py",
+  "/scripts/run_upstream_comparison.py",
   "/src/agentrunproof/**",
   "/tests/**",
 ]

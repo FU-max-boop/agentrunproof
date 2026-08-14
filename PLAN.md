@@ -28,12 +28,27 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   buggy/fixed runs matched their exact semantic fingerprints using real Runner execution and
   released public interfaces. Clean Linux canonical evidence remains Gate 2.
 - [x] (2026-08-14) Completed the adversarial, package, and public-evidence release gates.
-- [x] (2026-08-14) Published the public repository and immutable `v0.1.0` GitHub
-  release after all Python 3.10-3.14 package cells and the Linux evidence job passed.
-  PyPI publication is awaiting account verification and OIDC trust setup.
-- [ ] Report the current `RunResult.to_state()` sibling-approval isolation counterexample with
-  a conventional upstream regression test and an AgentRunProof certificate.
-- [ ] Obtain external recognition.
+- [x] (2026-08-14) Published the public repository, immutable `v0.1.0` and `v0.1.1`
+  GitHub releases, and both releases on PyPI through Trusted Publishing after the package and
+  canonical Linux evidence jobs passed.
+- [x] (2026-08-14) Added a public-API, no-network two-edge `Agent.as_tool` approval-routing
+  scenario. It records a precise FAIL on merged upstream commit `0b93ce8` and all requested
+  invariants PASS on #4414's merged correction `50d65f65`; clean public comparison evidence is
+  still pending.
+- [x] (2026-08-14) Reported the `RunResult.to_state()` sibling-approval isolation counterexample
+  with a conventional reproducer and the immutable AgentRunProof v0.1.1 certificate. The
+  maintainer acknowledged it and merged follow-up PR #4413, whose body cites the report.
+- [x] (2026-08-14) Obtained maintainer-level external recognition through that acknowledgement,
+  cited fix, and the public AgentRunProof validation posted on #4413. This is recognition of the
+  diagnostic evidence, not adoption as an SDK dependency.
+- [x] (2026-08-14) Added a durable-state recursive scenario that distinguished the initial #4414
+  head from its revision: `9dc7da9` remained interrupted after JSON restoration, while `1725a898`
+  passed the direct and restored-approval scenarios and was squash-merged as `50d65f65`. The
+  upstream 24-case test covers the wider approval/rejection timing matrix. Posted the independent
+  validation on #4414 before merge.
+- [x] (2026-08-14) Proposed a minimal community-tool entry for AgentRunProof on the official v0.21
+  testing-guide PR #4381. The maintainer declined the listing to keep that guide focused on
+  SDK-maintained APIs, while explicitly welcoming future reproducible findings backed by the tool.
 
 ## Milestones
 
@@ -98,6 +113,19 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   APIs and content-addressed observations; generalized object snapshot isolation remains out of
   scope. Certificate v1 may grow only strict backward-compatible fields that old certificates do
   not need.
+- **2026-08-14 — Recursive approval-routing extension:** The merged upstream isolation fix in
+  #4413 leaves a concrete two-`Agent.as_tool` approval-routing boundary, so one built-in scenario
+  may retain and resume an explicitly named direct sibling state. Certificate v1 gains only
+  optional, backward-compatible phase and transition fields that bind the saved branch to its
+  content digest; generalized branching and arbitrary workflow replay remain out of scope.
+- **2026-08-14 — Durable recursive routing extension:** Automated and AgentRunProof review of
+  #4414 proved that the same explicit approval can remain unresolved only after a public
+  `RunState` JSON round trip. Add one fixed-shape serialization scenario using the existing phase
+  and transition contract; do not generalize it into arbitrary checkpoint-graph traversal.
+- **2026-08-14 — Upstream adoption boundary:** Keep AgentRunProof external after the maintainer
+  declined a community-tool listing in #4381. Pursue acceptance through precise conventional
+  regressions and reproducible validation of concrete gaps, not repeated documentation or default
+  dependency requests.
 
 ## Outcomes & Retrospective
 

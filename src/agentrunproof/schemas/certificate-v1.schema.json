@@ -262,6 +262,7 @@
                   "model_script_consumed",
                   "state_transitions",
                   "state_fork_isolation",
+                  "recursive_approval_routing",
                   "phase_contract",
                   "session_replay"
                 ]
@@ -365,6 +366,9 @@
             }
           }
         },
+        "saved_sibling_from": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+        },
         "expected_outcome": {
           "properties": {
             "exception_type": {
@@ -456,6 +460,9 @@
           "type": "object",
           "properties": {
             "source_phase": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            },
+            "saved_sibling_from": {
               "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
             },
             "state_schema_version": {
@@ -634,6 +641,8 @@
           "type": "array",
           "items": { "$ref": "#/$defs/contractDecision" }
         },
+        "save_sibling_state": { "type": "boolean" },
+        "saved_sibling_from": { "$ref": "#/$defs/nullableString" },
         "expected_outcome": { "$ref": "#/$defs/expectedOutcome" },
         "expected_tool_counts_delta": { "$ref": "#/$defs/toolCounts" },
         "expected_probes_after": {
@@ -757,6 +766,18 @@
           "subject_state_after_sha256",
           "subject_state_unchanged",
           "sibling_interruption_call_ids"
+        ],
+        "sibling_state_saved": [
+          "saved_sibling_from",
+          "saved_sibling_state_sha256"
+        ],
+        "saved_sibling_from": [
+          "sibling_state_saved",
+          "saved_sibling_state_sha256"
+        ],
+        "saved_sibling_state_sha256": [
+          "sibling_state_saved",
+          "saved_sibling_from"
         ]
       },
       "required": [
@@ -809,7 +830,10 @@
         "sibling_decisions": {
           "type": "array",
           "items": { "$ref": "#/$defs/stateTransitionDecision" }
-        }
+        },
+        "sibling_state_saved": { "type": "boolean" },
+        "saved_sibling_from": { "$ref": "#/$defs/nullableString" },
+        "saved_sibling_state_sha256": { "$ref": "#/$defs/nullableSha256" }
       }
     },
     "phaseObservation": {

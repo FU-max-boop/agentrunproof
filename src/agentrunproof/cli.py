@@ -15,6 +15,7 @@ from .certificate import (
     write_certificate,
 )
 from .current.bundle import load_current_bundle
+from .current.comparison import load_upstream_comparison
 from .engine import run_scenario
 from .history.bundle import load_history_bundle
 from .history.evidence import load_history_matrix
@@ -62,6 +63,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     check_current_bundle.add_argument("bundle", type=Path)
     check_current_bundle.set_defaults(handler=_check_current_bundle)
+
+    check_upstream_bundle = subparsers.add_parser(
+        "check-upstream-bundle",
+        help="Validate the released-versus-upstream comparison bundle.",
+    )
+    check_upstream_bundle.add_argument("bundle", type=Path)
+    check_upstream_bundle.set_defaults(handler=_check_upstream_bundle)
     return parser
 
 
@@ -118,4 +126,10 @@ def _check_history_bundle(args: argparse.Namespace) -> int:
 def _check_current_bundle(args: argparse.Namespace) -> int:
     bundle = load_current_bundle(args.bundle)
     print(f"VALID {bundle['bundle_id']} current-bundle")
+    return 0
+
+
+def _check_upstream_bundle(args: argparse.Namespace) -> int:
+    bundle = load_upstream_comparison(args.bundle)
+    print(f"VALID {bundle['bundle_id']} upstream-comparison")
     return 0
