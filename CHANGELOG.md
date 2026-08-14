@@ -4,6 +4,8 @@ All notable changes to AgentRunProof will be documented here.
 
 ## Unreleased
 
+## 0.1.1 - 2026-08-14
+
 - Add `runstate-sibling-approval-isolation`, a public no-network scenario that detects approval
   decisions leaking between two direct `RunState` snapshots from one interrupted result.
 - Add the `state_fork_isolation` invariant and strict, backward-compatible certificate-v1 fields
