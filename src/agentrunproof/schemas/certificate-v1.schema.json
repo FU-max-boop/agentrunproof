@@ -1,0 +1,891 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/FU-max-boop/agentrunproof/blob/main/src/agentrunproof/schemas/certificate-v1.schema.json",
+  "title": "AgentRunProof certificate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "certificate_id",
+    "overall_status",
+    "tool",
+    "runtime",
+    "source",
+    "scenario",
+    "observations",
+    "invariants",
+    "redaction",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": { "const": "agentrunproof.certificate/v1" },
+    "certificate_id": { "$ref": "#/$defs/prefixedSha256" },
+    "overall_status": { "$ref": "#/$defs/proofStatus" },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "normalizer_revision", "evaluator_revision"],
+      "properties": {
+        "name": { "const": "agentrunproof" },
+        "version": { "type": "string", "minLength": 1 },
+        "normalizer_revision": { "const": 1 },
+        "evaluator_revision": { "const": 1 }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python", "implementation", "platform", "packages"],
+      "properties": {
+        "python": { "type": "string", "minLength": 1 },
+        "implementation": { "type": "string", "minLength": 1 },
+        "platform": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["system", "machine"],
+          "properties": {
+            "system": { "type": "string" },
+            "machine": { "type": "string" }
+          }
+        },
+        "packages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["openai-agents", "openai", "pydantic"],
+          "properties": {
+            "openai-agents": { "$ref": "#/$defs/nullableString" },
+            "openai": { "$ref": "#/$defs/nullableString" },
+            "pydantic": { "$ref": "#/$defs/nullableString" }
+          }
+        }
+      }
+    },
+    "source": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableSource" },
+        { "$ref": "#/$defs/cleanSource" },
+        { "$ref": "#/$defs/dirtySource" }
+      ]
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "description",
+        "variants",
+        "requested_invariants",
+        "expected_tool_counts",
+        "expected_outcome",
+        "phase_contracts",
+        "normalized_input_sha256"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["non_streaming", "streaming"] }
+        },
+        "requested_invariants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "contains": { "const": "execution_outcome" },
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "expected_tool_counts": { "$ref": "#/$defs/toolCounts" },
+        "expected_outcome": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "interruption_count", "exception_type"],
+              "properties": {
+                "kind": { "const": "completed" },
+                "interruption_count": { "const": 0 },
+                "exception_type": { "type": "null" }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "interruption_count", "exception_type"],
+              "properties": {
+                "kind": { "const": "interrupted" },
+                "interruption_count": { "type": "integer", "minimum": 1 },
+                "exception_type": { "type": "null" }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "interruption_count", "exception_type"],
+              "properties": {
+                "kind": { "const": "raises" },
+                "interruption_count": { "const": 0 },
+                "exception_type": { "type": "string", "minLength": 1 }
+              }
+            }
+          ]
+        },
+        "phase_contracts": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 2,
+          "propertyNames": { "enum": ["non_streaming", "streaming"] },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/phaseContract" }
+          }
+        },
+        "normalized_input_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "observations": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 2,
+      "propertyNames": { "enum": ["non_streaming", "streaming"] },
+      "additionalProperties": { "$ref": "#/$defs/observation" }
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "reason", "details"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "$ref": "#/$defs/proofStatus" },
+          "reason": { "type": "string", "minLength": 1 },
+          "details": {}
+        }
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_payloads", "policy"],
+      "properties": {
+        "public_payloads": { "type": "boolean" },
+        "policy": { "enum": ["public-synthetic-v1", "sha256-summary-v1"] }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        { "const": "This certificate is a content-addressed integrity record, not a signature." },
+        { "const": "It evaluates only the scenario variants and invariants named in this payload." },
+        { "const": "It does not evaluate model-output quality or remote service behavior." },
+        { "const": "Private summaries use correlatable, dictionary-guessable hashes; do not publish them." },
+        { "const": "Dynamic callback identities are descriptive markers only; conformance is decided from recorded observable behavior." }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["redaction"],
+        "properties": {
+          "redaction": {
+            "required": ["public_payloads"],
+            "properties": { "public_payloads": { "const": false } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "redaction": {
+            "required": ["policy"],
+            "properties": { "policy": { "const": "sha256-summary-v1" } }
+          },
+          "scenario": { "$ref": "#/$defs/privateScenario" },
+          "observations": {
+            "additionalProperties": { "$ref": "#/$defs/privateObservation" }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "redaction": {
+            "required": ["policy"],
+            "properties": { "policy": { "const": "public-synthetic-v1" } }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "prefixedSha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "nullableSha256": {
+      "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "nullableString": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+    },
+    "proofStatus": { "enum": ["PASS", "FAIL", "NOT_RUN"] },
+    "redactedSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redacted", "sha256", "bytes", "kind"],
+      "properties": {
+        "redacted": { "const": true },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["null", "boolean", "number", "string", "array", "object"] }
+      }
+    },
+    "privateScenario": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/prefixedSha256" },
+        "description": { "$ref": "#/$defs/prefixedSha256" },
+        "requested_invariants": {
+          "items": {
+            "anyOf": [
+              {
+                "enum": [
+                  "execution_outcome",
+                  "stream_parity",
+                  "tool_linkage",
+                  "exactly_once",
+                  "model_script_consumed",
+                  "state_transitions",
+                  "phase_contract",
+                  "session_replay"
+                ]
+              },
+              { "$ref": "#/$defs/prefixedSha256" }
+            ]
+          }
+        },
+        "expected_tool_counts": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "expected_outcome": {
+          "properties": {
+            "exception_type": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            }
+          }
+        },
+        "phase_contracts": {
+          "additionalProperties": {
+            "items": { "$ref": "#/$defs/privatePhaseContract" }
+          }
+        }
+      }
+    },
+    "privateObservation": {
+      "type": "object",
+      "properties": {
+        "final_output": { "$ref": "#/$defs/redactedSummary" },
+        "last_agent": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+        },
+        "new_items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "model_calls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "session_items": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "items": { "$ref": "#/$defs/redactedSummary" }
+            }
+          ]
+        },
+        "session_operations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "tool_counts": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "usage": { "$ref": "#/$defs/redactedSummary" },
+        "guardrails": { "$ref": "#/$defs/redactedSummary" },
+        "stream_event_types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "exception": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "properties": { "type": { "$ref": "#/$defs/prefixedSha256" } }
+            }
+          ]
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/privatePhaseObservation" }
+        }
+      }
+    },
+    "privatePhaseContract": {
+      "type": "object",
+      "properties": {
+        "phase_id": { "$ref": "#/$defs/prefixedSha256" },
+        "model_group": { "$ref": "#/$defs/prefixedSha256" },
+        "source_phase": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rejection_message": { "$ref": "#/$defs/redactedSummary" }
+            }
+          }
+        },
+        "expected_outcome": {
+          "properties": {
+            "exception_type": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            }
+          }
+        },
+        "expected_tool_counts_delta": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "expected_probes_after": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" },
+          "additionalProperties": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "callback_markers": {
+          "type": "object",
+          "properties": {
+            "before": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            },
+            "probes": {
+              "propertyNames": { "$ref": "#/$defs/prefixedSha256" },
+              "additionalProperties": { "$ref": "#/$defs/prefixedSha256" }
+            }
+          }
+        }
+      }
+    },
+    "privatePhaseObservation": {
+      "type": "object",
+      "properties": {
+        "phase_id": { "$ref": "#/$defs/prefixedSha256" },
+        "model_group": { "$ref": "#/$defs/prefixedSha256" },
+        "final_output": { "$ref": "#/$defs/redactedSummary" },
+        "last_agent": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+        },
+        "new_items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "model_calls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "session_items_before": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "array", "items": { "$ref": "#/$defs/redactedSummary" } }
+          ]
+        },
+        "session_items_after": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "array", "items": { "$ref": "#/$defs/redactedSummary" } }
+          ]
+        },
+        "session_operations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "tool_counts_delta": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "usage": { "$ref": "#/$defs/redactedSummary" },
+        "guardrails": { "$ref": "#/$defs/redactedSummary" },
+        "stream_event_types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prefixedSha256" }
+        },
+        "exception": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "properties": { "type": { "$ref": "#/$defs/prefixedSha256" } }
+            }
+          ]
+        },
+        "probes_before": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" },
+          "additionalProperties": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "probes_after": {
+          "propertyNames": { "$ref": "#/$defs/prefixedSha256" },
+          "additionalProperties": { "$ref": "#/$defs/redactedSummary" }
+        },
+        "state_transition": {
+          "type": "object",
+          "properties": {
+            "source_phase": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            },
+            "state_schema_version": {
+              "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
+            }
+          }
+        }
+      }
+    },
+    "sourceBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "dirty",
+        "tracked_diff_sha256",
+        "untracked_paths_sha256",
+        "index_flags_sha256"
+      ],
+      "properties": {
+        "commit": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/gitCommit" }]
+        },
+        "dirty": { "type": ["boolean", "null"] },
+        "tracked_diff_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "untracked_paths_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "index_flags_sha256": { "$ref": "#/$defs/nullableSha256" }
+      }
+    },
+    "unavailableSource": {
+      "allOf": [
+        { "$ref": "#/$defs/sourceBase" },
+        {
+          "properties": {
+            "commit": { "type": "null" },
+            "dirty": { "type": "null" },
+            "tracked_diff_sha256": { "type": "null" },
+            "untracked_paths_sha256": { "type": "null" },
+            "index_flags_sha256": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "cleanSource": {
+      "allOf": [
+        { "$ref": "#/$defs/sourceBase" },
+        {
+          "properties": {
+            "commit": { "$ref": "#/$defs/gitCommit" },
+            "dirty": { "const": false },
+            "tracked_diff_sha256": {
+              "const": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+            },
+            "untracked_paths_sha256": {
+              "const": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            },
+            "index_flags_sha256": {
+              "const": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            }
+          }
+        }
+      ]
+    },
+    "dirtySource": {
+      "allOf": [
+        { "$ref": "#/$defs/sourceBase" },
+        {
+          "properties": {
+            "commit": { "$ref": "#/$defs/gitCommit" },
+            "dirty": { "const": true },
+            "tracked_diff_sha256": { "$ref": "#/$defs/sha256" },
+            "untracked_paths_sha256": { "$ref": "#/$defs/sha256" },
+            "index_flags_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "tracked_diff_sha256": {
+                "const": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+              },
+              "untracked_paths_sha256": {
+                "const": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+              },
+              "index_flags_sha256": {
+                "const": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+              }
+            },
+            "required": [
+              "tracked_diff_sha256",
+              "untracked_paths_sha256",
+              "index_flags_sha256"
+            ]
+          }
+        }
+      ]
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "toolCounts": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "expectedOutcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "interruption_count", "exception_type"],
+          "properties": {
+            "kind": { "const": "completed" },
+            "interruption_count": { "const": 0 },
+            "exception_type": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "interruption_count", "exception_type"],
+          "properties": {
+            "kind": { "const": "interrupted" },
+            "interruption_count": { "type": "integer", "minimum": 1 },
+            "exception_type": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "interruption_count", "exception_type"],
+          "properties": {
+            "kind": { "const": "raises" },
+            "interruption_count": { "const": 0 },
+            "exception_type": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "contractDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "call_id_sha256", "rejection_message"],
+      "properties": {
+        "action": { "enum": ["approve", "reject"] },
+        "call_id_sha256": { "$ref": "#/$defs/sha256" },
+        "rejection_message": {}
+      }
+    },
+    "phaseContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase_id",
+        "input_kind",
+        "source_phase",
+        "json_round_trip",
+        "decisions",
+        "expected_outcome",
+        "expected_tool_counts_delta",
+        "expected_probes_after",
+        "callback_markers",
+        "model_group"
+      ],
+      "properties": {
+        "phase_id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+        "input_kind": { "enum": ["literal", "resume"] },
+        "source_phase": { "$ref": "#/$defs/nullableString" },
+        "json_round_trip": { "type": "boolean" },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contractDecision" }
+        },
+        "expected_outcome": { "$ref": "#/$defs/expectedOutcome" },
+        "expected_tool_counts_delta": { "$ref": "#/$defs/toolCounts" },
+        "expected_probes_after": {
+          "type": "object",
+          "propertyNames": { "minLength": 1, "pattern": "^\\S+$" }
+        },
+        "callback_markers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["before", "probes"],
+          "properties": {
+            "before": { "$ref": "#/$defs/nullableString" },
+            "probes": {
+              "type": "object",
+              "propertyNames": { "minLength": 1, "pattern": "^\\S+$" },
+              "additionalProperties": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "model_group": { "type": "string", "minLength": 1, "pattern": "^\\S+$" }
+      }
+    },
+    "toolLinkage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "call_id_sha256"],
+      "properties": {
+        "kind": { "enum": ["call", "output"] },
+        "call_id_sha256": {
+          "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+        }
+      }
+    },
+    "toolLinkageEvents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/toolLinkage" }
+    },
+    "toolLinkageChannels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated", "session", "model_inputs"],
+      "properties": {
+        "generated": { "$ref": "#/$defs/toolLinkageEvents" },
+        "session": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/toolLinkageEvents" }]
+        },
+        "model_inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/toolLinkageEvents" }
+        }
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "message_sha256", "origin"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "message_sha256": { "$ref": "#/$defs/sha256" },
+        "origin": { "enum": ["runner", "transition", "observation"] }
+      }
+    },
+    "phaseToolLinkageChannels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated", "session_before", "session_after", "model_inputs"],
+      "properties": {
+        "generated": { "$ref": "#/$defs/toolLinkageEvents" },
+        "session_before": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/toolLinkageEvents" }]
+        },
+        "session_after": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/toolLinkageEvents" }]
+        },
+        "model_inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/toolLinkageEvents" }
+        }
+      }
+    },
+    "stateTransitionDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "call_id_sha256", "matched"],
+      "properties": {
+        "action": { "enum": ["approve", "reject"] },
+        "call_id_sha256": { "$ref": "#/$defs/sha256" },
+        "matched": { "type": "boolean" }
+      }
+    },
+    "stateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source_phase",
+        "json_round_trip_requested",
+        "json_round_trip_equal",
+        "restored_state_equal",
+        "state_schema_version",
+        "source_interruption_call_ids",
+        "restored_interruption_call_ids",
+        "decisions"
+      ],
+      "properties": {
+        "kind": { "enum": ["literal", "resume"] },
+        "source_phase": { "$ref": "#/$defs/nullableString" },
+        "json_round_trip_requested": { "type": "boolean" },
+        "json_round_trip_equal": {
+          "type": ["boolean", "null"]
+        },
+        "restored_state_equal": {
+          "type": ["boolean", "null"]
+        },
+        "state_schema_version": { "$ref": "#/$defs/nullableString" },
+        "source_interruption_call_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+          }
+        },
+        "restored_interruption_call_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stateTransitionDecision" }
+        }
+      }
+    },
+    "phaseObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase_id",
+        "model_group",
+        "input_kind",
+        "status",
+        "final_output",
+        "last_agent",
+        "new_items",
+        "model_calls",
+        "session_items_before",
+        "session_items_after",
+        "session_operations",
+        "tool_counts_delta",
+        "tool_linkage",
+        "interruption_call_ids",
+        "interruption_count",
+        "usage",
+        "guardrails",
+        "stream_event_types",
+        "remaining_model_steps",
+        "exception",
+        "state_transition",
+        "probes_before",
+        "probes_after"
+      ],
+      "properties": {
+        "phase_id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+        "model_group": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+        "input_kind": { "enum": ["literal", "resume"] },
+        "status": { "enum": ["PASS", "ERROR"] },
+        "final_output": {},
+        "last_agent": { "$ref": "#/$defs/nullableString" },
+        "new_items": { "type": "array" },
+        "model_calls": { "type": "array" },
+        "session_items_before": {
+          "anyOf": [{ "type": "null" }, { "type": "array" }]
+        },
+        "session_items_after": {
+          "anyOf": [{ "type": "null" }, { "type": "array" }]
+        },
+        "session_operations": { "type": "array" },
+        "tool_counts_delta": { "$ref": "#/$defs/toolCounts" },
+        "tool_linkage": { "$ref": "#/$defs/phaseToolLinkageChannels" },
+        "interruption_call_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+          }
+        },
+        "interruption_count": { "type": "integer", "minimum": 0 },
+        "usage": {},
+        "guardrails": {},
+        "stream_event_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "remaining_model_steps": { "type": "integer", "minimum": 0 },
+        "exception": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/exception" }]
+        },
+        "state_transition": { "$ref": "#/$defs/stateTransition" },
+        "probes_before": {
+          "type": "object",
+          "propertyNames": { "minLength": 1, "pattern": "^\\S+$" }
+        },
+        "probes_after": {
+          "type": "object",
+          "propertyNames": { "minLength": 1, "pattern": "^\\S+$" }
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variant",
+        "status",
+        "final_output",
+        "last_agent",
+        "new_items",
+        "model_calls",
+        "session_items",
+        "session_operations",
+        "tool_counts",
+        "tool_linkage",
+        "interruption_call_ids",
+        "interruption_count",
+        "usage",
+        "guardrails",
+        "stream_event_types",
+        "remaining_model_steps",
+        "exception",
+        "phases"
+      ],
+      "properties": {
+        "variant": { "enum": ["non_streaming", "streaming"] },
+        "status": { "enum": ["PASS", "ERROR"] },
+        "final_output": {},
+        "last_agent": { "$ref": "#/$defs/nullableString" },
+        "new_items": { "type": "array" },
+        "model_calls": { "type": "array" },
+        "session_items": {
+          "anyOf": [{ "type": "null" }, { "type": "array" }]
+        },
+        "session_operations": { "type": "array" },
+        "tool_counts": { "$ref": "#/$defs/toolCounts" },
+        "tool_linkage": { "$ref": "#/$defs/toolLinkageChannels" },
+        "interruption_call_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+          }
+        },
+        "interruption_count": { "type": "integer", "minimum": 0 },
+        "usage": {},
+        "guardrails": {},
+        "stream_event_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "remaining_model_steps": { "type": "integer", "minimum": 0 },
+        "exception": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/exception" }]
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/phaseObservation" }
+        }
+      }
+    }
+  }
+}

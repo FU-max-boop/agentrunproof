@@ -1,0 +1,2 @@
+-r common-0.19-linux-py312.txt
+openai-agents==0.19.3 --hash=sha256:f86c3a8fff9e2cf50ebdc17dfd656bbdfb9c8ed465041185439244f27cd358d7

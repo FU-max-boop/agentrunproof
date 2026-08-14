@@ -1,0 +1,98 @@
+[build-system]
+requires = ["hatchling==1.26.3"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentrunproof"
+dynamic = ["version"]
+description = "Deterministic runtime conformance for the OpenAI Agents SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Fu Xiaonan" }]
+dependencies = [
+  "openai-agents>=0.20.0,<0.21",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/FU-max-boop/agentrunproof"
+Repository = "https://github.com/FU-max-boop/agentrunproof"
+Issues = "https://github.com/FU-max-boop/agentrunproof/issues"
+Changelog = "https://github.com/FU-max-boop/agentrunproof/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/FU-max-boop/agentrunproof#readme"
+Evidence = "https://github.com/FU-max-boop/agentrunproof/tree/main/evidence/history/v1"
+
+[project.scripts]
+agentrunproof = "agentrunproof.cli:main"
+
+[project.optional-dependencies]
+test = [
+  "jsonschema>=4.23",
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+]
+dev = [
+  "build>=1.2",
+  "mypy>=1.15",
+  "ruff>=0.12",
+  "twine>=6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentrunproof"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/CHANGELOG.md",
+  "/LICENSE",
+  "/README.md",
+  "/pyproject.toml",
+  "/requirements/history/**",
+  "/scripts/run_history_matrix.py",
+  "/src/agentrunproof/**",
+  "/tests/**",
+]
+exclude = [
+  "/.gitignore",
+  "/build/**",
+  "/dist/**",
+  "/evidence/**",
+]
+
+[tool.hatch.version]
+path = "src/agentrunproof/_version.py"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["B", "E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["agentrunproof"]
+
+[[tool.mypy.overrides]]
+module = ["jsonschema", "jsonschema.*"]
+ignore_missing_imports = true
