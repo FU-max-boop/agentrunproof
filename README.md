@@ -12,9 +12,10 @@ AgentRunProof v0.1 targets `openai-agents` 0.20.x on Python 3.10–3.14. Built-i
 - declared counts for scenario-owned local tool invocations;
 - consumption of each deterministic model script;
 - selected public `RunState` transitions: JSON transport, `from_json()` reconstruction, restored-state equality, interruption identities, and exact approve/reject decisions;
+- direct sibling-`RunState` approval isolation from repeated `RunResult.to_state()` calls;
 - per-phase tool-count deltas, scenario probes, and replay of persisted tool history.
 
-The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
+The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
 
 AgentRunProof checks SDK runtime semantics. It is not a model-quality evaluator, tracing backend, HTTP recorder, hosted service, or general agent framework.
 
@@ -29,6 +30,21 @@ agentrunproof check-certificate build/basic.json
 ```
 
 A successful probe exits `0`; an observed invariant violation exits `1`; invalid input or unverifiable evidence exits `2`.
+
+The sibling-isolation probe intentionally exposes a released SDK counterexample:
+
+```bash
+agentrunproof probe runstate-sibling-approval-isolation \
+  --certificate build/runstate-sibling-isolation.json
+agentrunproof check-certificate build/runstate-sibling-isolation.json
+```
+
+On `openai-agents==0.20.0`, approving one sibling state also mutates an untouched sibling; resuming
+that untouched state executes the protected tool. The certificate records
+`state_fork_isolation: SIBLING_STATE_MUTATED` and the associated unexpected outcome and side
+effect. This adjacent gap was reported on upstream PR
+[#4409](https://github.com/openai/openai-agents-python/pull/4409#issuecomment-5291724795);
+the report is not a claim that #4409 introduced the bug.
 
 For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The built-in scenario and the two multi-phase historical scenarios are executable examples.
 
@@ -49,7 +65,7 @@ python scripts/run_history_matrix.py --output-directory build/history-rehearsal
 agentrunproof check-history-matrix build/history-rehearsal/matrix.json
 ```
 
-Canonical evidence is stricter: Linux x86_64 CPython 3.12, fresh environments, hash-locked wheel closures, isolated worker processes, a Python socket-deny guard during scenario execution, an exact clean Git commit, and a bundle marker written last. Artifact acquisition occurs before the network guard and is explicitly recorded as a limitation. The public Gate 2 bundle will live under [`evidence/history/v1`](https://github.com/FU-max-boop/agentrunproof/tree/main/evidence/history/v1).
+Canonical evidence is stricter: Linux x86_64 CPython 3.12, fresh environments, hash-locked wheel closures, isolated worker processes, a Python socket-deny guard during scenario execution, an exact clean Git commit, and a bundle marker written last. Artifact acquisition occurs before the network guard and is explicitly recorded as a limitation. The immutable v0.1.0 Gate 2 bundle is published under [`evidence/history/v1`](https://github.com/FU-max-boop/agentrunproof/tree/main/evidence/history/v1).
 
 The 0.19.x rows are historical-only compatibility probes, not supported installations: the harness wheel is installed with `--no-deps` over each locked legacy SDK closure, and that dependency-metadata bypass is explicit in the canonical bundle.
 
@@ -63,7 +79,7 @@ The private profile prevents raw observed payloads from being serialized, but va
 
 ## Project contract
 
-The exact release gates and exclusions are in the [project charter](https://github.com/FU-max-boop/agentrunproof/blob/main/PROJECT_CHARTER.md). The [execution plan](https://github.com/FU-max-boop/agentrunproof/blob/main/PLAN.md) distinguishes the completed development rehearsal from canonical public evidence.
+The exact release gates and exclusions are in the [project charter](https://github.com/FU-max-boop/agentrunproof/blob/main/PROJECT_CHARTER.md). The [execution plan](https://github.com/FU-max-boop/agentrunproof/blob/main/PLAN.md) tracks the completed historical release and the current upstream counterexample.
 
 AgentRunProof is seeking evidence-backed adoption: a conventional upstream reproducer, optional CI fixture, or documentation reference—not a default SDK dependency.
 

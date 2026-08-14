@@ -14,6 +14,7 @@ from .certificate import (
     load_certificate,
     write_certificate,
 )
+from .current.bundle import load_current_bundle
 from .engine import run_scenario
 from .history.bundle import load_history_bundle
 from .history.evidence import load_history_matrix
@@ -54,6 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     check_bundle.add_argument("bundle", type=Path)
     check_bundle.set_defaults(handler=_check_history_bundle)
+
+    check_current_bundle = subparsers.add_parser(
+        "check-current-bundle",
+        help="Validate the canonical current counterexample bundle.",
+    )
+    check_current_bundle.add_argument("bundle", type=Path)
+    check_current_bundle.set_defaults(handler=_check_current_bundle)
     return parser
 
 
@@ -104,4 +112,10 @@ def _check_history_matrix(args: argparse.Namespace) -> int:
 def _check_history_bundle(args: argparse.Namespace) -> int:
     bundle = load_history_bundle(args.bundle)
     print(f"VALID {bundle['bundle_id']} history-bundle")
+    return 0
+
+
+def _check_current_bundle(args: argparse.Namespace) -> int:
+    bundle = load_current_bundle(args.bundle)
+    print(f"VALID {bundle['bundle_id']} current-bundle")
     return 0

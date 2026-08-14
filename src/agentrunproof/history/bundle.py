@@ -84,6 +84,12 @@ def finalize_environment(value: Any) -> dict[str, JsonValue]:
     return _validate_environment(candidate)
 
 
+def validate_environment(value: Any) -> dict[str, JsonValue]:
+    """Validate one already-addressed historical environment closure."""
+
+    return _validate_environment(value)
+
+
 def finalize_history_bundle(value: Any, *, directory: Path) -> dict[str, JsonValue]:
     if not isinstance(value, dict):
         raise HistoryBundleError("The history bundle must be a JSON object.")

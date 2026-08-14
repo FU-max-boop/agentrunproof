@@ -44,6 +44,7 @@ def evaluate_invariants(
         "exactly_once": _exactly_once,
         "model_script_consumed": _model_script_consumed,
         "state_transitions": _state_transitions,
+        "state_fork_isolation": _state_fork_isolation,
         "phase_contract": _phase_contract,
         "session_replay": _session_replay,
     }
@@ -513,6 +514,129 @@ def _round_trip_count(
         for contracts in phase_contracts.values()
         for contract in contracts
         if contract.json_round_trip
+    )
+
+
+def _state_fork_isolation(
+    scenario: Scenario,
+    observations: dict[RunVariant, Observation],
+    phase_contracts: dict[RunVariant, tuple[PhaseContract, ...]] | None,
+) -> InvariantResult:
+    del scenario
+    if phase_contracts is None:
+        return _not_run("state_fork_isolation", "NO_PHASE_CONTRACTS")
+    invalid: dict[str, Any] = {}
+    mutated: dict[str, Any] = {}
+    fork_count = 0
+    for variant, observation in observations.items():
+        contracts = phase_contracts.get(variant)
+        if contracts is None or len(contracts) != len(observation.phases):
+            invalid[variant.value] = {"reason": "PHASE_CONTRACT_MISMATCH"}
+            continue
+        variant_invalid: dict[str, Any] = {}
+        variant_mutated: dict[str, Any] = {}
+        for phase, contract in zip(observation.phases, contracts, strict=True):
+            transition = phase.state_transition
+            expected_decisions = [
+                {
+                    "action": decision["action"],
+                    "call_id_sha256": decision["call_id_sha256"],
+                }
+                for decision in contract.sibling_decisions
+            ]
+            if not expected_decisions:
+                if _unexpected_state_fork_data(transition):
+                    variant_invalid[phase.phase_id] = ["UNEXPECTED_STATE_FORK_DATA"]
+                continue
+            fork_count += 1
+            problems: list[str] = []
+            if (
+                contract.input_kind != "resume"
+                or contract.json_round_trip
+                or bool(contract.decisions)
+            ):
+                problems.append("INVALID_STATE_FORK_CONTRACT")
+            sibling_ids = transition.get("sibling_interruption_call_ids")
+            source_ids = transition.get("source_interruption_call_ids")
+            if not isinstance(sibling_ids, list) or sibling_ids != source_ids:
+                problems.append("SIBLING_INTERRUPTION_IDS_CHANGED")
+            actual_decisions = transition.get("sibling_decisions")
+            projected_actual = (
+                [
+                    {
+                        "action": decision.get("action"),
+                        "call_id_sha256": decision.get("call_id_sha256"),
+                    }
+                    for decision in actual_decisions
+                    if isinstance(decision, dict)
+                ]
+                if isinstance(actual_decisions, list)
+                else None
+            )
+            if projected_actual != expected_decisions:
+                problems.append("SIBLING_DECISION_CONTRACT_MISMATCH")
+            if not isinstance(actual_decisions, list) or any(
+                not isinstance(decision, dict) or decision.get("matched") is not True
+                for decision in actual_decisions
+            ):
+                problems.append("SIBLING_DECISION_NOT_EXACTLY_MATCHED")
+            if isinstance(sibling_ids, list) and any(
+                decision["call_id_sha256"] not in sibling_ids for decision in expected_decisions
+            ):
+                problems.append("SIBLING_DECISION_TARGET_NOT_INTERRUPTED")
+            before = transition.get("subject_state_before_sha256")
+            after = transition.get("subject_state_after_sha256")
+            unchanged = transition.get("subject_state_unchanged")
+            if not _sha256_digest(before) or not _sha256_digest(after):
+                problems.append("SUBJECT_STATE_DIGEST_MISSING")
+            elif not isinstance(unchanged, bool) or unchanged != (before == after):
+                problems.append("SUBJECT_STATE_DIGEST_MISMATCH")
+            if problems:
+                variant_invalid[phase.phase_id] = problems
+            elif unchanged is not True:
+                variant_mutated[phase.phase_id] = {
+                    "subject_state_before_sha256": before,
+                    "subject_state_after_sha256": after,
+                }
+        if variant_invalid:
+            invalid[variant.value] = variant_invalid
+        if variant_mutated:
+            mutated[variant.value] = variant_mutated
+    if invalid:
+        return _fail(
+            "state_fork_isolation",
+            "INVALID_STATE_FORK_TRANSITION",
+            invalid,
+        )
+    if fork_count == 0:
+        return _not_run("state_fork_isolation", "NO_STATE_FORKS")
+    if mutated:
+        return _fail(
+            "state_fork_isolation",
+            "SIBLING_STATE_MUTATED",
+            mutated,
+        )
+    return _pass(
+        "state_fork_isolation",
+        {"variants": len(observations), "forks": fork_count},
+    )
+
+
+def _unexpected_state_fork_data(transition: dict[str, JsonValue]) -> bool:
+    return (
+        transition.get("subject_state_before_sha256") is not None
+        or transition.get("subject_state_after_sha256") is not None
+        or transition.get("subject_state_unchanged") is not None
+        or transition.get("sibling_interruption_call_ids", []) != []
+        or transition.get("sibling_decisions", []) != []
+    )
+
+
+def _sha256_digest(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
     )
 
 

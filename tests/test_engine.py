@@ -12,13 +12,19 @@ from agents import (
     function_tool,
 )
 
-from agentrunproof.builtins import BASIC_TOOL_SESSION_PARITY
+from agentrunproof._canonical import sha256_hex
+from agentrunproof.builtins import (
+    BASIC_TOOL_SESSION_PARITY,
+    RUNSTATE_SIBLING_APPROVAL_ISOLATION,
+)
 from agentrunproof.engine import run_scenario
 from agentrunproof.model import DeterministicModel, ModelStep, assistant_message, function_call
 from agentrunproof.scenario import (
+    Decision,
     ExpectedOutcome,
     LiteralInput,
     OutcomeKind,
+    ResumeInput,
     RunVariant,
     Scenario,
     ScenarioCase,
@@ -47,6 +53,74 @@ async def test_builtin_tool_session_scenario_passes_every_invariant() -> None:
     assert all(
         observation.remaining_model_steps == 0 for observation in proof.observations.values()
     )
+
+
+def test_sibling_decisions_require_one_direct_undecided_subject() -> None:
+    sibling = (Decision("call-1"),)
+
+    with pytest.raises(ValueError, match="direct resume"):
+        ResumeInput(source_phase="initial", sibling_decisions=sibling)
+    with pytest.raises(ValueError, match="no decisions"):
+        ResumeInput(
+            source_phase="initial",
+            decisions=(Decision("call-1"),),
+            json_round_trip=False,
+            sibling_decisions=sibling,
+        )
+    with pytest.raises(ValueError, match="unique call IDs"):
+        ResumeInput(
+            source_phase="initial",
+            json_round_trip=False,
+            sibling_decisions=(Decision("call-1"), Decision("call-1")),
+        )
+
+
+@pytest.mark.asyncio
+async def test_runstate_sibling_isolation_records_exact_public_state_fork() -> None:
+    proof = await run_scenario(RUNSTATE_SIBLING_APPROVAL_ISOLATION)
+    invariant = next(
+        result for result in proof.invariant_results if result.name == "state_fork_isolation"
+    )
+    call_digest = sha256_hex("agentrunproof-sibling-call-1")
+    unchanged: list[bool] = []
+
+    for variant, observation in proof.observations.items():
+        assert len(observation.phases) == 2, variant
+        initial, fork = observation.phases
+        assert initial.interruption_count == 1
+        transition = fork.state_transition
+        assert transition["source_interruption_call_ids"] == [call_digest]
+        assert transition["restored_interruption_call_ids"] == [call_digest]
+        assert transition["sibling_interruption_call_ids"] == [call_digest]
+        assert transition["decisions"] == []
+        assert transition["sibling_decisions"] == [
+            {"action": "approve", "call_id_sha256": call_digest, "matched": True}
+        ]
+        before = transition["subject_state_before_sha256"]
+        after = transition["subject_state_after_sha256"]
+        assert isinstance(before, str) and len(before) == 64
+        assert isinstance(after, str) and len(after) == 64
+        observed_unchanged = transition["subject_state_unchanged"]
+        assert observed_unchanged is (before == after)
+        assert isinstance(observed_unchanged, bool)
+        unchanged.append(observed_unchanged)
+
+        contract = proof.phase_contracts[variant][1]
+        assert contract.expected_outcome == ExpectedOutcome(
+            kind=OutcomeKind.INTERRUPTED,
+            interruption_count=1,
+        )
+        assert contract.expected_tool_counts_delta == {"approval_tool": 0}
+
+    assert len(set(unchanged)) == 1
+    if all(unchanged):
+        assert invariant.status == "PASS"
+        assert invariant.reason == "OK"
+        assert proof.status == "PASS"
+    else:
+        assert invariant.status == "FAIL"
+        assert invariant.reason == "SIBLING_STATE_MUTATED"
+        assert proof.status == "FAIL"
 
 
 def test_one_model_group_cannot_hide_an_independent_unconsumed_script() -> None:

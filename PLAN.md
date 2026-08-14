@@ -27,9 +27,12 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
 - [x] (2026-08-14) Completed the Gate 0 development rehearsal: all six fresh-environment
   buggy/fixed runs matched their exact semantic fingerprints using real Runner execution and
   released public interfaces. Clean Linux canonical evidence remains Gate 2.
-- [ ] Complete adversarial review and release gates.
-- [ ] Publish the repository and first package release.
-- [ ] Find and report a current upstream counterexample.
+- [x] (2026-08-14) Completed the adversarial, package, and public-evidence release gates.
+- [x] (2026-08-14) Published the public repository and immutable `v0.1.0` GitHub
+  release after all Python 3.10-3.14 package cells and the Linux evidence job passed.
+  PyPI publication is awaiting account verification and OIDC trust setup.
+- [ ] Report the current `RunResult.to_state()` sibling-approval isolation counterexample with
+  a conventional upstream regression test and an AgentRunProof certificate.
 - [ ] Obtain external recognition.
 
 ## Milestones
@@ -76,6 +79,10 @@ The milestone is complete when the charter's Gate 4 is satisfied.
 - The approval and guardrail histories require several real Runner invocations. Moving them
   through one generic multi-phase engine closed a proof gap that a standalone history worker
   would otherwise have hidden from certificate validation.
+- A paused `RunResult` on both released 0.20.0 and current `main` returns sibling `RunState`
+  objects whose approval state is aliased: approving one sibling mutates and authorizes the
+  other. JSON-restored siblings are independent, making the direct-vs-serialized mismatch a
+  narrow, falsifiable current counterexample.
 
 ## Decision Log
 
@@ -86,6 +93,11 @@ The milestone is complete when the charter's Gate 4 is satisfied.
 - **2026-08-14 — Adoption target:** Seek upstream test/docs/dev-tool recognition, not a default runtime dependency.
 - **2026-08-14 — Streaming boundary:** v0.1 claims post-run parity for a terminal-event scripted stream, not token/delta timing, backpressure, or cancellation behavior.
 - **2026-08-14 — Evidence commits:** Canonical matrix generation is anchored to source commit C; the child evidence commit E may add only the matrix and final bundle marker.
+- **2026-08-14 — Narrow v0.1.1 scope extension:** A concrete released/current counterexample
+  justifies adding one sibling-`RunState` approval-isolation scenario. It will use only public SDK
+  APIs and content-addressed observations; generalized object snapshot isolation remains out of
+  scope. Certificate v1 may grow only strict backward-compatible fields that old certificates do
+  not need.
 
 ## Outcomes & Retrospective
 

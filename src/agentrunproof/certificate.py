@@ -70,6 +70,7 @@ _PRIVATE_SAFE_INVARIANTS = {
     "exactly_once",
     "model_script_consumed",
     "state_transitions",
+    "state_fork_isolation",
     "phase_contract",
     "session_replay",
 }
@@ -570,6 +571,7 @@ def _sanitize_phase_contracts(
                         ),
                         "json_round_trip": phase.json_round_trip,
                         "decisions": list(phase.decisions),
+                        "sibling_decisions": list(phase.sibling_decisions),
                         "expected_outcome": {
                             "kind": phase.expected_outcome.kind.value,
                             "interruption_count": phase.expected_outcome.interruption_count,
@@ -626,6 +628,7 @@ def _validate_phase_contracts(
         "callback_markers",
         "model_group",
     }
+    optional = {"sibling_decisions"}
     for variant_name, raw_phases in value.items():
         if not isinstance(raw_phases, list) or not raw_phases:
             raise CertificateError(f"Invalid phase contracts for {variant_name}.")
@@ -633,7 +636,11 @@ def _validate_phase_contracts(
         seen: set[str] = set()
         for index, raw_phase in enumerate(raw_phases):
             label = f"phase_contracts.{variant_name}[{index}]"
-            if not isinstance(raw_phase, dict) or set(raw_phase) != required:
+            if (
+                not isinstance(raw_phase, dict)
+                or not required.issubset(raw_phase)
+                or not set(raw_phase).issubset(required | optional)
+            ):
                 raise CertificateError(f"Invalid {label} fields.")
             phase_id = raw_phase.get("phase_id")
             model_group = raw_phase.get("model_group")
@@ -663,6 +670,15 @@ def _validate_phase_contracts(
             decisions = _validate_contract_decisions(raw_phase.get("decisions"), label)
             if input_kind == "literal" and decisions:
                 raise CertificateError(f"Literal {label} cannot declare decisions.")
+            sibling_decisions = _validate_contract_decisions(
+                raw_phase.get("sibling_decisions", []),
+                label,
+                field="sibling_decisions",
+            )
+            if sibling_decisions and (input_kind != "resume" or round_trip or decisions):
+                raise CertificateError(
+                    f"{label}.sibling_decisions require a direct resume with no subject decisions."
+                )
             expected_outcome = _decode_expected_outcome(
                 raw_phase.get("expected_outcome"), f"{label}.expected_outcome"
             )
@@ -701,6 +717,7 @@ def _validate_phase_contracts(
                     expected_probes_after=cast(dict[str, Any], probes),
                     callback_markers=cast(dict[str, Any], callbacks),
                     model_group=model_group,
+                    sibling_decisions=tuple(sibling_decisions),
                 )
             )
             seen.add(phase_id)
@@ -712,9 +729,14 @@ def _validate_phase_contracts(
     return decoded
 
 
-def _validate_contract_decisions(value: Any, label: str) -> list[dict[str, Any]]:
+def _validate_contract_decisions(
+    value: Any,
+    label: str,
+    *,
+    field: str = "decisions",
+) -> list[dict[str, Any]]:
     if not isinstance(value, list):
-        raise CertificateError(f"Invalid {label}.decisions.")
+        raise CertificateError(f"Invalid {label}.{field}.")
     result: list[dict[str, Any]] = []
     identifiers: set[str] = set()
     for decision in value:
@@ -723,7 +745,7 @@ def _validate_contract_decisions(value: Any, label: str) -> list[dict[str, Any]]
             "call_id_sha256",
             "rejection_message",
         }:
-            raise CertificateError(f"Invalid {label} decision fields.")
+            raise CertificateError(f"Invalid {label}.{field} fields.")
         digest = decision.get("call_id_sha256")
         if (
             decision.get("action") not in {"approve", "reject"}
@@ -731,7 +753,7 @@ def _validate_contract_decisions(value: Any, label: str) -> list[dict[str, Any]]
             or not re.fullmatch(r"[0-9a-f]{64}", digest)
             or digest in identifiers
         ):
-            raise CertificateError(f"Invalid or duplicate {label} decision.")
+            raise CertificateError(f"Invalid or duplicate {label}.{field} entry.")
         identifiers.add(digest)
         result.append(cast(dict[str, Any], copy.deepcopy(decision)))
     return result
@@ -1050,8 +1072,22 @@ def _validate_state_transition(value: Any, label: str) -> dict[str, JsonValue]:
         "restored_interruption_call_ids",
         "decisions",
     }
-    if not isinstance(value, dict) or set(value) != required:
+    fork_fields = {
+        "subject_state_before_sha256",
+        "subject_state_after_sha256",
+        "subject_state_unchanged",
+        "sibling_interruption_call_ids",
+        "sibling_decisions",
+    }
+    if (
+        not isinstance(value, dict)
+        or not required.issubset(value)
+        or not set(value).issubset(required | fork_fields)
+    ):
         raise CertificateError(f"Invalid {label} fields.")
+    present_fork_fields = set(value) & fork_fields
+    if present_fork_fields and present_fork_fields != fork_fields:
+        raise CertificateError(f"Invalid partial {label} state-fork fields.")
     if value.get("kind") not in {"literal", "resume"}:
         raise CertificateError(f"Invalid {label}.kind.")
     source = value.get("source_phase")
@@ -1074,16 +1110,59 @@ def _validate_state_transition(value: Any, label: str) -> dict[str, JsonValue]:
         value.get("restored_interruption_call_ids"),
         f"{label}.restored_interruption_call_ids",
     )
-    decisions = value.get("decisions")
-    if not isinstance(decisions, list):
-        raise CertificateError(f"Invalid {label}.decisions.")
-    for decision in decisions:
+    _validate_transition_decisions(value.get("decisions"), label, field="decisions")
+    if present_fork_fields:
+        for key in ("subject_state_before_sha256", "subject_state_after_sha256"):
+            digest = value.get(key)
+            if digest is not None and (
+                not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            ):
+                raise CertificateError(f"Invalid {label}.{key}.")
+        unchanged = value.get("subject_state_unchanged")
+        if unchanged is not None and not isinstance(unchanged, bool):
+            raise CertificateError(f"Invalid {label}.subject_state_unchanged.")
+        sibling_ids = _validate_identifier_list(
+            value.get("sibling_interruption_call_ids"),
+            f"{label}.sibling_interruption_call_ids",
+        )
+        sibling_decisions = _validate_transition_decisions(
+            value.get("sibling_decisions"),
+            label,
+            field="sibling_decisions",
+        )
+        if sibling_decisions:
+            if (
+                not sibling_ids
+                or not isinstance(value.get("subject_state_before_sha256"), str)
+                or not isinstance(value.get("subject_state_after_sha256"), str)
+                or not isinstance(unchanged, bool)
+            ):
+                raise CertificateError(f"Incomplete {label} state-fork observation.")
+        elif (
+            sibling_ids
+            or value.get("subject_state_before_sha256") is not None
+            or value.get("subject_state_after_sha256") is not None
+            or unchanged is not None
+        ):
+            raise CertificateError(f"Unexpected {label} state-fork observation.")
+    return cast(dict[str, JsonValue], copy.deepcopy(value))
+
+
+def _validate_transition_decisions(
+    value: Any,
+    label: str,
+    *,
+    field: str,
+) -> list[dict[str, JsonValue]]:
+    if not isinstance(value, list):
+        raise CertificateError(f"Invalid {label}.{field}.")
+    for decision in value:
         if not isinstance(decision, dict) or set(decision) != {
             "action",
             "call_id_sha256",
             "matched",
         }:
-            raise CertificateError(f"Invalid {label} decision fields.")
+            raise CertificateError(f"Invalid {label}.{field} fields.")
         digest = decision.get("call_id_sha256")
         if (
             decision.get("action") not in {"approve", "reject"}
@@ -1091,8 +1170,8 @@ def _validate_state_transition(value: Any, label: str) -> dict[str, JsonValue]:
             or not re.fullmatch(r"[0-9a-f]{64}", digest)
             or not isinstance(decision.get("matched"), bool)
         ):
-            raise CertificateError(f"Invalid {label} decision.")
-    return cast(dict[str, JsonValue], copy.deepcopy(value))
+            raise CertificateError(f"Invalid {label}.{field} entry.")
+    return cast(list[dict[str, JsonValue]], copy.deepcopy(value))
 
 
 def _validate_probe_mapping(value: Any, label: str) -> dict[str, JsonValue]:
@@ -1596,13 +1675,14 @@ def _validate_private_phase_contract_shapes(value: Any) -> None:
                 _is_name_digest(name) and _is_name_digest(marker) for name, marker in probes.items()
             ):
                 raise CertificateError(f"{label}.callback probe markers are not redacted.")
-            decisions = contract.get("decisions")
-            if not isinstance(decisions, list) or not all(
-                isinstance(decision, dict)
-                and _is_redacted_summary(decision.get("rejection_message"))
-                for decision in decisions
-            ):
-                raise CertificateError(f"{label}.decision messages are not redacted.")
+            for key in ("decisions", "sibling_decisions"):
+                decisions = contract.get(key, [])
+                if not isinstance(decisions, list) or not all(
+                    isinstance(decision, dict)
+                    and _is_redacted_summary(decision.get("rejection_message"))
+                    for decision in decisions
+                ):
+                    raise CertificateError(f"{label}.{key} messages are not redacted.")
 
 
 def _validate_private_phase_observation_shape(value: Any, *, label: str) -> None:

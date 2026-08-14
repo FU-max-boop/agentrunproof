@@ -261,6 +261,7 @@
                   "exactly_once",
                   "model_script_consumed",
                   "state_transitions",
+                  "state_fork_isolation",
                   "phase_contract",
                   "session_replay"
                 ]
@@ -347,6 +348,15 @@
           "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/prefixedSha256" }]
         },
         "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rejection_message": { "$ref": "#/$defs/redactedSummary" }
+            }
+          }
+        },
+        "sibling_decisions": {
           "type": "array",
           "items": {
             "type": "object",
@@ -620,6 +630,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/contractDecision" }
         },
+        "sibling_decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contractDecision" }
+        },
         "expected_outcome": { "$ref": "#/$defs/expectedOutcome" },
         "expected_tool_counts_delta": { "$ref": "#/$defs/toolCounts" },
         "expected_probes_after": {
@@ -713,6 +727,38 @@
     "stateTransition": {
       "type": "object",
       "additionalProperties": false,
+      "dependentRequired": {
+        "subject_state_before_sha256": [
+          "subject_state_after_sha256",
+          "subject_state_unchanged",
+          "sibling_interruption_call_ids",
+          "sibling_decisions"
+        ],
+        "subject_state_after_sha256": [
+          "subject_state_before_sha256",
+          "subject_state_unchanged",
+          "sibling_interruption_call_ids",
+          "sibling_decisions"
+        ],
+        "subject_state_unchanged": [
+          "subject_state_before_sha256",
+          "subject_state_after_sha256",
+          "sibling_interruption_call_ids",
+          "sibling_decisions"
+        ],
+        "sibling_interruption_call_ids": [
+          "subject_state_before_sha256",
+          "subject_state_after_sha256",
+          "subject_state_unchanged",
+          "sibling_decisions"
+        ],
+        "sibling_decisions": [
+          "subject_state_before_sha256",
+          "subject_state_after_sha256",
+          "subject_state_unchanged",
+          "sibling_interruption_call_ids"
+        ]
+      },
       "required": [
         "kind",
         "source_phase",
@@ -748,6 +794,19 @@
           }
         },
         "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stateTransitionDecision" }
+        },
+        "subject_state_before_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "subject_state_after_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "subject_state_unchanged": { "type": ["boolean", "null"] },
+        "sibling_interruption_call_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [{ "const": "INVALID" }, { "$ref": "#/$defs/sha256" }]
+          }
+        },
+        "sibling_decisions": {
           "type": "array",
           "items": { "$ref": "#/$defs/stateTransitionDecision" }
         }

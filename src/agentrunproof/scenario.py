@@ -76,6 +76,7 @@ class ResumeInput:
     source_phase: str
     decisions: tuple[Decision, ...] = ()
     json_round_trip: bool = True
+    sibling_decisions: tuple[Decision, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.source_phase:
@@ -83,6 +84,13 @@ class ResumeInput:
         identifiers = [decision.call_id for decision in self.decisions]
         if len(set(identifiers)) != len(identifiers):
             raise ValueError("Resume decisions must target unique call IDs.")
+        sibling_identifiers = [decision.call_id for decision in self.sibling_decisions]
+        if len(set(sibling_identifiers)) != len(sibling_identifiers):
+            raise ValueError("Sibling decisions must target unique call IDs.")
+        if self.sibling_decisions and (self.json_round_trip or self.decisions):
+            raise ValueError(
+                "Sibling decisions require a direct resume with no decisions on the subject state."
+            )
 
 
 PhaseInput = LiteralInput | ResumeInput
@@ -181,6 +189,7 @@ class PhaseContract:
     expected_probes_after: Mapping[str, Any]
     callback_markers: Mapping[str, Any]
     model_group: str
+    sibling_decisions: tuple[dict[str, Any], ...] = ()
 
 
 ScenarioFactory = Callable[[RunVariant], ScenarioCase | ScenarioPlan]

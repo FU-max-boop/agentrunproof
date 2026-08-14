@@ -8,7 +8,9 @@ from agentrunproof.cli import main
 
 def test_cli_lists_and_runs_builtin_scenario(tmp_path: Path, capsys) -> None:
     assert main(["list-scenarios"]) == 0
-    assert "basic-tool-session-parity" in capsys.readouterr().out
+    listed = capsys.readouterr().out
+    assert "basic-tool-session-parity" in listed
+    assert "runstate-sibling-approval-isolation" in listed
 
     certificate = tmp_path / "certificate.json"
     assert (
@@ -25,6 +27,29 @@ def test_cli_lists_and_runs_builtin_scenario(tmp_path: Path, capsys) -> None:
     output = capsys.readouterr().out
     assert "PASS basic-tool-session-parity" in output
     assert certificate.exists()
+    assert main(["check-certificate", str(certificate)]) == 0
+    assert "VALID sha256:" in capsys.readouterr().out
+
+
+def test_cli_emits_a_checkable_state_fork_certificate(tmp_path: Path, capsys) -> None:
+    certificate = tmp_path / "state-fork.json"
+    exit_code = main(
+        [
+            "probe",
+            "runstate-sibling-approval-isolation",
+            "--certificate",
+            str(certificate),
+        ]
+    )
+    payload = json.loads(certificate.read_text(encoding="utf-8"))
+    expected_exit = 0 if payload["overall_status"] == "PASS" else 1
+
+    assert exit_code == expected_exit
+    assert payload["scenario"]["id"] == "runstate-sibling-approval-isolation"
+    assert "state_fork_isolation" in payload["scenario"]["requested_invariants"]
+    assert f"{payload['overall_status']} runstate-sibling-approval-isolation" in (
+        capsys.readouterr().out
+    )
     assert main(["check-certificate", str(certificate)]) == 0
     assert "VALID sha256:" in capsys.readouterr().out
 

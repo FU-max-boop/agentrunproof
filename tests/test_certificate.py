@@ -4,10 +4,14 @@ import copy
 import json
 import subprocess
 from collections.abc import Callable
+from dataclasses import replace
 
 import jsonschema
 import pytest
 
+from agentrunproof.builtins import (
+    RUNSTATE_SIBLING_APPROVAL_ISOLATION,
+)
 from agentrunproof.certificate import (
     CertificateError,
     build_certificate,
@@ -22,6 +26,14 @@ from agentrunproof.history.guardrail_atomicity import resumed_guardrail_atomicit
 from agentrunproof.history.scenarios import runstate_context_approval_proof
 from agentrunproof.scenario import Scenario
 
+_STATE_FORK_TRANSITION_FIELDS = (
+    "subject_state_before_sha256",
+    "subject_state_after_sha256",
+    "subject_state_unchanged",
+    "sibling_interruption_call_ids",
+    "sibling_decisions",
+)
+
 
 @pytest.mark.asyncio
 async def test_certificate_is_deterministic_and_matches_json_schema(
@@ -35,6 +47,63 @@ async def test_certificate_is_deterministic_and_matches_json_schema(
     validate_certificate(first)
     schema = json.loads(schema_path().read_text(encoding="utf-8"))
     jsonschema.validate(first, schema)
+
+
+@pytest.mark.asyncio
+async def test_state_fork_failure_is_a_valid_public_certificate() -> None:
+    proof = await run_scenario(RUNSTATE_SIBLING_APPROVAL_ISOLATION)
+    certificate = build_certificate(proof)
+
+    assert certificate["overall_status"] == proof.status
+    assert "state_fork_isolation" in certificate["scenario"]["requested_invariants"]
+    contract = certificate["scenario"]["phase_contracts"]["non_streaming"][1]
+    assert len(contract["sibling_decisions"]) == 1
+    transition = certificate["observations"]["non_streaming"]["phases"][1]["state_transition"]
+    assert set(_STATE_FORK_TRANSITION_FIELDS).issubset(transition)
+    validate_certificate(certificate)
+    schema = json.loads(schema_path().read_text(encoding="utf-8"))
+    jsonschema.validate(certificate, schema)
+
+
+@pytest.mark.asyncio
+async def test_state_fork_fields_preserve_private_certificate_redaction() -> None:
+    private_scenario = replace(RUNSTATE_SIBLING_APPROVAL_ISOLATION, public_payloads=False)
+    certificate = build_certificate(await run_scenario(private_scenario))
+    rendered = certificate_json(certificate)
+
+    assert "agentrunproof-sibling-call-1" not in rendered
+    assert "approval_tool" not in rendered
+    validate_certificate(certificate)
+    schema = json.loads(schema_path().read_text(encoding="utf-8"))
+    jsonschema.validate(certificate, schema)
+
+
+@pytest.mark.asyncio
+async def test_certificate_v1_still_accepts_the_original_optional_field_shape() -> None:
+    import agentrunproof.certificate as certificate_module
+
+    certificate = build_certificate(await runstate_context_approval_proof())
+    for contracts in certificate["scenario"]["phase_contracts"].values():
+        for contract in contracts:
+            contract.pop("sibling_decisions")
+    for observation in certificate["observations"].values():
+        for phase in observation["phases"]:
+            transition = phase["state_transition"]
+            for field in _STATE_FORK_TRANSITION_FIELDS:
+                transition.pop(field)
+    certificate["scenario"]["normalized_input_sha256"] = (
+        certificate_module._normalized_input_digest(
+            scenario_id=certificate["scenario"]["id"],
+            revision=certificate["scenario"]["revision"],
+            phase_contracts=certificate["scenario"]["phase_contracts"],
+            observations=certificate["observations"],
+        )
+    )
+    certificate["certificate_id"] = certificate_module._certificate_id(certificate)
+
+    validate_certificate(certificate)
+    schema = json.loads(schema_path().read_text(encoding="utf-8"))
+    jsonschema.validate(certificate, schema)
 
 
 @pytest.mark.asyncio
@@ -416,6 +485,42 @@ async def test_readdressing_both_variants_cannot_hide_restored_state_drift() -> 
         transition = observation["phases"][1]["state_transition"]
         assert transition["restored_state_equal"] is True
         transition["restored_state_equal"] = False
+    forged["certificate_id"] = certificate_module._certificate_id(forged)
+
+    with pytest.raises(CertificateError, match="recomputed observations"):
+        validate_certificate(forged)
+
+
+@pytest.mark.asyncio
+async def test_readdressing_cannot_hide_forged_state_fork_isolation() -> None:
+    import agentrunproof.certificate as certificate_module
+
+    certificate = build_certificate(await run_scenario(RUNSTATE_SIBLING_APPROVAL_ISOLATION))
+    forged = copy.deepcopy(certificate)
+    transition = forged["observations"]["non_streaming"]["phases"][1]["state_transition"]
+    observed = transition["subject_state_unchanged"]
+    assert isinstance(observed, bool)
+    transition["subject_state_unchanged"] = not observed
+    forged["certificate_id"] = certificate_module._certificate_id(forged)
+
+    with pytest.raises(CertificateError, match="recomputed observations"):
+        validate_certificate(forged)
+
+
+@pytest.mark.asyncio
+async def test_state_fork_contract_is_bound_to_exact_sibling_decisions() -> None:
+    import agentrunproof.certificate as certificate_module
+
+    certificate = build_certificate(await run_scenario(RUNSTATE_SIBLING_APPROVAL_ISOLATION))
+    forged = copy.deepcopy(certificate)
+    contract = forged["scenario"]["phase_contracts"]["non_streaming"][1]
+    contract["sibling_decisions"][0]["call_id_sha256"] = "0" * 64
+    forged["scenario"]["normalized_input_sha256"] = certificate_module._normalized_input_digest(
+        scenario_id=forged["scenario"]["id"],
+        revision=forged["scenario"]["revision"],
+        phase_contracts=forged["scenario"]["phase_contracts"],
+        observations=forged["observations"],
+    )
     forged["certificate_id"] = certificate_module._certificate_id(forged)
 
     with pytest.raises(CertificateError, match="recomputed observations"):

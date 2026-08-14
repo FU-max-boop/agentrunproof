@@ -19,6 +19,7 @@ from .observation import (
     capture_observation,
 )
 from .scenario import (
+    Decision,
     DecisionAction,
     ExpectedOutcome,
     LiteralInput,
@@ -135,6 +136,17 @@ def _phase_contract(phase: ScenarioPhase, *, public_payloads: bool) -> PhaseCont
             },
         },
         model_group=phase.model_group,
+        sibling_decisions=tuple(
+            {
+                "action": decision.action.value,
+                "call_id_sha256": sha256_hex(decision.call_id),
+                "rejection_message": _payload(
+                    decision.rejection_message,
+                    public=public_payloads,
+                ),
+            }
+            for decision in (resume.sibling_decisions if resume is not None else ())
+        ),
     )
 
 
@@ -334,6 +346,24 @@ async def _resolve_input(
         )
     source_state = source_result.to_state()
     source_ids = [_raw_interruption_call_id(item) for item in source_state.get_interruptions()]
+    subject_state_before_sha256: str | None = None
+    subject_state_after_sha256: str | None = None
+    subject_state_unchanged: bool | None = None
+    sibling_ids: list[str | None] = []
+    actual_sibling_decisions: list[dict[str, JsonValue]] = []
+    if resume.sibling_decisions:
+        sibling_state = source_result.to_state()
+        sibling_interruptions = list(sibling_state.get_interruptions())
+        sibling_ids = [_raw_interruption_call_id(item) for item in sibling_interruptions]
+        subject_state_before_sha256 = sha256_hex(source_state.to_json())
+        actual_sibling_decisions = _apply_decisions(
+            state=sibling_state,
+            interruptions=sibling_interruptions,
+            interruption_ids=sibling_ids,
+            decisions=resume.sibling_decisions,
+        )
+        subject_state_after_sha256 = sha256_hex(source_state.to_json())
+        subject_state_unchanged = subject_state_before_sha256 == subject_state_after_sha256
     round_trip_equal: bool | None = None
     restored_state_equal: bool | None = None
     state_schema_version: str | None = None
@@ -356,29 +386,12 @@ async def _resolve_input(
         state = source_state
     restored = list(state.get_interruptions())
     restored_ids = [_raw_interruption_call_id(item) for item in restored]
-    actual_decisions: list[dict[str, JsonValue]] = []
-    for decision in resume.decisions:
-        matches = [
-            interruption
-            for interruption, call_id in zip(restored, restored_ids, strict=True)
-            if call_id == decision.call_id
-        ]
-        matched = len(matches) == 1
-        actual_decisions.append(
-            {
-                "action": decision.action.value,
-                "call_id_sha256": sha256_hex(decision.call_id),
-                "matched": matched,
-            }
-        )
-        if not matched:
-            raise ScenarioTransitionError(
-                f"Decision call_id {decision.call_id!r} did not match exactly one interruption."
-            )
-        if decision.action is DecisionAction.APPROVE:
-            state.approve(matches[0])
-        else:
-            state.reject(matches[0], rejection_message=decision.rejection_message)
+    actual_decisions = _apply_decisions(
+        state=state,
+        interruptions=restored,
+        interruption_ids=restored_ids,
+        decisions=resume.decisions,
+    )
     transition: dict[str, JsonValue] = {
         "kind": "resume",
         "source_phase": resume.source_phase,
@@ -389,6 +402,11 @@ async def _resolve_input(
         "source_interruption_call_ids": [_identifier_digest(value) for value in source_ids],
         "restored_interruption_call_ids": [_identifier_digest(value) for value in restored_ids],
         "decisions": cast(list[JsonValue], actual_decisions),
+        "subject_state_before_sha256": subject_state_before_sha256,
+        "subject_state_after_sha256": subject_state_after_sha256,
+        "subject_state_unchanged": subject_state_unchanged,
+        "sibling_interruption_call_ids": [_identifier_digest(value) for value in sibling_ids],
+        "sibling_decisions": cast(list[JsonValue], actual_sibling_decisions),
     }
     return state, transition
 
@@ -407,7 +425,45 @@ def _empty_transition(phase: ScenarioPhase) -> dict[str, JsonValue]:
         "source_interruption_call_ids": [],
         "restored_interruption_call_ids": [],
         "decisions": [],
+        "subject_state_before_sha256": None,
+        "subject_state_after_sha256": None,
+        "subject_state_unchanged": None,
+        "sibling_interruption_call_ids": [],
+        "sibling_decisions": [],
     }
+
+
+def _apply_decisions(
+    *,
+    state: RunState[Any],
+    interruptions: list[Any],
+    interruption_ids: list[str | None],
+    decisions: tuple[Decision, ...],
+) -> list[dict[str, JsonValue]]:
+    actual_decisions: list[dict[str, JsonValue]] = []
+    for decision in decisions:
+        matches = [
+            interruption
+            for interruption, call_id in zip(interruptions, interruption_ids, strict=True)
+            if call_id == decision.call_id
+        ]
+        matched = len(matches) == 1
+        actual_decisions.append(
+            {
+                "action": decision.action.value,
+                "call_id_sha256": sha256_hex(decision.call_id),
+                "matched": matched,
+            }
+        )
+        if not matched:
+            raise ScenarioTransitionError(
+                f"Decision call_id {decision.call_id!r} did not match exactly one interruption."
+            )
+        if decision.action is DecisionAction.APPROVE:
+            state.approve(matches[0])
+        else:
+            state.reject(matches[0], rejection_message=decision.rejection_message)
+    return actual_decisions
 
 
 def _raw_interruption_call_id(interruption: Any) -> str | None:

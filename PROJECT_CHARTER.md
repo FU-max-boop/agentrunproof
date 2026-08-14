@@ -6,7 +6,7 @@ AgentRunProof is a deterministic runtime-conformance harness for `openai-agents-
 
 The project exists to make cross-path runtime regressions cheap to reproduce and difficult to dismiss. Its primary users are Agents SDK contributors, regression-fixture authors, and application teams whose workflows depend on interruption, resume, guardrail, or streaming semantics.
 
-## v0.1 contract
+## v0.1.x contract
 
 The first public contract covers the standard text `Runner` and these released public boundaries:
 
@@ -14,6 +14,8 @@ The first public contract covers the standard text `Runner` and these released p
 - `Runner.run()` and `Runner.run_streamed()`;
 - `RecordingSession` and its observable persisted items and operations;
 - selected serializable `RunState` interruption, exact decision, and resume transitions;
+- one selected sibling-`RunState` approval-isolation scenario using repeated public
+  `RunResult.to_state()` calls;
 - function-tool calls and model-visible function-tool contracts;
 - one pinned output-guardrail durability scenario expressed through public APIs.
 
@@ -21,11 +23,11 @@ For one logical scenario, AgentRunProof may execute several variants. A variant 
 
 The target compatibility baseline is `openai-agents` 0.20.x on Python 3.10 through 3.14. Support for a Python/SDK pair is claimed only after the packaged artifact passes that exact CI cell.
 
-The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.1 claims.
+The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.1.x claims.
 
 ## Required invariants
 
-The v0.1 engine can report these invariant families:
+The v0.1.x engine can report these invariant families:
 
 1. **Execution outcome:** each phase declares whether it must complete, interrupt a precise number of times, or raise a qualified Runner exception; transition and observation errors never satisfy a Runner-exception contract.
 2. **Terminal-event stream parity:** equivalent scripted behavior produces equivalent post-run normalized observations in streaming and non-streaming runs, excluding event-type differences by design.
@@ -33,8 +35,10 @@ The v0.1 engine can report these invariant families:
 4. **Exactly-once side effects:** a scenario declares expected counts for its local tool invocations, globally and per phase.
 5. **Model-script consumption:** the final phase using each scripted model group must consume every declared response.
 6. **State transitions:** a resume may bind canonical JSON transport, public `RunState.from_json()` reconstruction, restored-state equality, interruption identities, and exact approve/reject decisions.
-7. **Phase contract:** observed tool-count deltas and scenario probes must match the declared value after every phase.
-8. **Session replay:** persisted tool events observed before a phase must appear in the first model input when that comparison is available.
+7. **State-fork isolation:** a decision applied to one direct sibling state must not mutate another
+   state returned from the same paused result.
+8. **Phase contract:** observed tool-count deltas and scenario probes must match the declared value after every phase.
+9. **Session replay:** persisted tool events observed before a phase must appear in the first model input when that comparison is available.
 
 An invariant is evaluated only when the scenario declares the observations required to judge it. Unsupported or unobserved conditions produce `NOT_RUN`, never an inferred pass.
 
@@ -52,11 +56,11 @@ Each certificate is canonical JSON with:
 
 The certificate identifier is the SHA-256 digest of the canonical certificate payload with the identifier field omitted. A certificate is an integrity record, not a signature or proof that an untrusted publisher executed the stated commands. Public evidence must additionally be pinned by a clean Git commit and CI or release artifact.
 
-The v0.1 private profile is designed to prevent raw payload serialization, not to provide cryptographic confidentiality. Its deterministic unsalted hashes expose equality and can be dictionary-guessed for low-entropy values; private certificates remain local unless every field has been reviewed for publication.
+The v0.1.x private profile is designed to prevent raw payload serialization, not to provide cryptographic confidentiality. Its deterministic unsalted hashes expose equality and can be dictionary-guessed for low-entropy values; private certificates remain local unless every field has been reviewed for publication.
 
 ## Deliberate exclusions
 
-v0.1 does not provide:
+v0.1.x does not provide:
 
 - model-output quality evaluation or an LLM judge;
 - a tracing, observability, or hosted dashboard backend;

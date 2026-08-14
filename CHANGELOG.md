@@ -4,6 +4,12 @@ All notable changes to AgentRunProof will be documented here.
 
 ## Unreleased
 
+- Add `runstate-sibling-approval-isolation`, a public no-network scenario that detects approval
+  decisions leaking between two direct `RunState` snapshots from one interrupted result.
+- Add the `state_fork_isolation` invariant and strict, backward-compatible certificate-v1 fields
+  for sibling decisions and subject-state digests.
+- Preserve validation of the immutable v0.1.0 historical evidence bundle.
+
 ## 0.1.0 - 2026-08-14
 
 - Add a deterministic public-`Model` harness over real streaming and non-streaming Runner paths.
