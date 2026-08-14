@@ -1,0 +1,229 @@
+name: Publish to PyPI
+
+run-name: Publish ${{ inputs.tag }} to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing final GitHub Release tag to publish
+        required: true
+        default: v0.1.0
+        type: string
+      publish:
+        description: Upload the verified distributions to PyPI
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify immutable release assets
+    runs-on: ubuntu-24.04
+    outputs:
+      artifact_id: ${{ steps.verified_artifact.outputs.artifact-id }}
+    steps:
+      - name: Refuse an untrusted repository or dispatch ref
+        env:
+          ACTUAL_REF: ${{ github.ref }}
+          ACTUAL_REPOSITORY_ID: ${{ github.repository_id }}
+        run: |
+          test "$ACTUAL_REPOSITORY_ID" = 1333981866
+          test "$ACTUAL_REF" = refs/heads/main
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12.13"
+      - name: Download and bind the final GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(git cat-file -t "$RELEASE_TAG")" = tag
+          test "$(git describe --tags --exact-match HEAD)" = "$RELEASE_TAG"
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = false
+          test "$(gh release view "$RELEASE_TAG" --json isPrerelease --jq .isPrerelease)" = false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/immutable-releases" --jq .enabled)" = true
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            --jq .immutable)" = true
+
+          mkdir release-assets
+          gh release download "$RELEASE_TAG" \
+            --pattern 'agentrunproof-*.whl' \
+            --pattern 'agentrunproof-*.tar.gz' \
+            --pattern SHA256SUMS \
+            --pattern matrix.json \
+            --pattern bundle.json \
+            --dir release-assets
+
+          shopt -s nullglob
+          wheels=(release-assets/agentrunproof-*.whl)
+          sdists=(release-assets/agentrunproof-*.tar.gz)
+          assets=(release-assets/*)
+          test "${#wheels[@]}" -eq 1
+          test "${#sdists[@]}" -eq 1
+          test "${#assets[@]}" -eq 5
+          version="${RELEASE_TAG#v}"
+          test "${wheels[0]}" = "release-assets/agentrunproof-${version}-py3-none-any.whl"
+          test "${sdists[0]}" = "release-assets/agentrunproof-${version}.tar.gz"
+
+          (cd release-assets && sha256sum --strict --check SHA256SUMS)
+          cmp release-assets/matrix.json evidence/history/v1/matrix.json
+          cmp release-assets/bundle.json evidence/history/v1/bundle.json
+
+          source_commit="$(python - <<'PY'
+          import json
+          print(json.load(open("release-assets/bundle.json", encoding="utf-8"))["source"]["commit"])
+          PY
+          )"
+          source_tree="$(python - <<'PY'
+          import json
+          print(json.load(open("release-assets/bundle.json", encoding="utf-8"))["source"]["tree"])
+          PY
+          )"
+          read -r -a tagged_commit <<< "$(git rev-list --parents -n 1 HEAD)"
+          test "${#tagged_commit[@]}" -eq 2
+          test "${tagged_commit[1]}" = "$source_commit"
+          test "$(git rev-list --count "$source_commit..HEAD")" = 1
+          test "$(git rev-parse "$source_commit^{tree}")" = "$source_tree"
+          git diff --name-only "$source_commit..HEAD" | sort > "$RUNNER_TEMP/actual-tag-files"
+          printf '%s\n' \
+            evidence/history/v1/bundle.json \
+            evidence/history/v1/matrix.json \
+            | sort > "$RUNNER_TEMP/expected-tag-files"
+          diff -u "$RUNNER_TEMP/expected-tag-files" "$RUNNER_TEMP/actual-tag-files"
+
+          mapfile -t checksum_names < <(awk 'NF == 2 {print $2}' release-assets/SHA256SUMS | sort)
+          test "${#checksum_names[@]}" -eq 2
+          printf '%s\n' \
+            "./agentrunproof-${version}-py3-none-any.whl" \
+            "./agentrunproof-${version}.tar.gz" \
+            | sort > "$RUNNER_TEMP/expected-checksum-names"
+          printf '%s\n' "${checksum_names[@]}" > "$RUNNER_TEMP/actual-checksum-names"
+          diff -u "$RUNNER_TEMP/expected-checksum-names" "$RUNNER_TEMP/actual-checksum-names"
+
+          release_json="$RUNNER_TEMP/release.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$release_json"
+          RELEASE_JSON="$release_json" python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          release = json.loads(Path(os.environ["RELEASE_JSON"]).read_text(encoding="utf-8"))
+          local = {path.name: path for path in Path("release-assets").iterdir()}
+          remote = {asset["name"]: asset for asset in release["assets"]}
+          assert release["draft"] is False
+          assert release["prerelease"] is False
+          assert release["immutable"] is True
+          assert local.keys() == remote.keys()
+          for name, path in local.items():
+              data = path.read_bytes()
+              assert remote[name]["state"] == "uploaded"
+              assert remote[name]["size"] == len(data)
+              assert remote[name]["digest"] == "sha256:" + hashlib.sha256(data).hexdigest()
+          PY
+
+      - name: Rebuild the tagged source and check the evidence bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check build==1.5.0
+          python -m build --outdir rebuilt
+
+          release_wheels=(release-assets/agentrunproof-*.whl)
+          release_sdists=(release-assets/agentrunproof-*.tar.gz)
+          rebuilt_wheels=(rebuilt/agentrunproof-*.whl)
+          rebuilt_sdists=(rebuilt/agentrunproof-*.tar.gz)
+          test "${#release_wheels[@]}" -eq 1
+          test "${#release_sdists[@]}" -eq 1
+          test "${#rebuilt_wheels[@]}" -eq 1
+          test "${#rebuilt_sdists[@]}" -eq 1
+          cmp "${release_wheels[0]}" "${rebuilt_wheels[0]}"
+          cmp "${release_sdists[0]}" "${rebuilt_sdists[0]}"
+
+          python -m venv "$RUNNER_TEMP/release-smoke"
+          "$RUNNER_TEMP/release-smoke/bin/python" -m pip install \
+            --disable-pip-version-check "${release_wheels[0]}"
+          "$RUNNER_TEMP/release-smoke/bin/python" -m pip check
+          "$RUNNER_TEMP/release-smoke/bin/agentrunproof" \
+            check-history-bundle release-assets/bundle.json
+
+          RELEASE_JSON="$RUNNER_TEMP/release.json" python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          release = json.loads(Path(os.environ["RELEASE_JSON"]).read_text(encoding="utf-8"))
+          expected = {asset["name"]: asset for asset in release["assets"]}
+          actual = {path.name: path for path in Path("release-assets").iterdir()}
+          assert actual.keys() == expected.keys()
+          for name, path in actual.items():
+              data = path.read_bytes()
+              assert expected[name]["size"] == len(data)
+              assert expected[name]["digest"] == "sha256:" + hashlib.sha256(data).hexdigest()
+          PY
+
+          mkdir verified-dist
+          cp "${release_wheels[0]}" "${release_sdists[0]}" verified-dist/
+          RELEASE_JSON="$RUNNER_TEMP/release.json" python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          release = json.loads(Path(os.environ["RELEASE_JSON"]).read_text(encoding="utf-8"))
+          expected = {asset["name"]: asset for asset in release["assets"]}
+          actual = {path.name: path for path in Path("verified-dist").iterdir()}
+          assert len(actual) == 2
+          for name, path in actual.items():
+              data = path.read_bytes()
+              assert expected[name]["size"] == len(data)
+              assert expected[name]["digest"] == "sha256:" + hashlib.sha256(data).hexdigest()
+          PY
+
+      - name: Upload the verified distributions for the OIDC job
+        id: verified_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-pypi-distributions-${{ inputs.tag }}
+          path: verified-dist/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish with PyPI Trusted Publishing
+    if: inputs.publish
+    needs: verify
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/agentrunproof
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the distributions verified in this workflow run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.verify.outputs.artifact_id }}
+          path: dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: dist/
+          attestations: true
