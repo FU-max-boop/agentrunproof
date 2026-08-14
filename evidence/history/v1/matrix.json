@@ -1,0 +1,763 @@
+{
+  "expectations_matched": true,
+  "matrix_id": "sha256:f141bed2f73b862997303870da60baee3f70f9cc4300ccd5e949afbeb1941040",
+  "runs": [
+    {
+      "case_id": "session-limit-orphan-output",
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "sdk_version": "0.19.4",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.19.4",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4322-session-limit-orphan-output",
+          "case_revision": 1,
+          "overall_status": "FAIL",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "exception_type": null,
+              "model_input": [
+                {
+                  "call_id": "history-call-1",
+                  "output": "sunny",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "text": "It is sunny.",
+                      "type": "output_text"
+                    }
+                  ],
+                  "role": "assistant",
+                  "type": "message"
+                },
+                {
+                  "content": "What about tomorrow?",
+                  "role": "user"
+                }
+              ],
+              "observed_types": [
+                "function_call_output",
+                "message",
+                "user"
+              ],
+              "orphan_call_ids": [
+                "history-call-1"
+              ],
+              "reason": "ORPHAN_FUNCTION_OUTPUT_REACHED_MODEL",
+              "status": "FAIL"
+            },
+            "streaming": {
+              "exception_type": null,
+              "model_input": [
+                {
+                  "call_id": "history-call-1",
+                  "output": "sunny",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "text": "It is sunny.",
+                      "type": "output_text"
+                    }
+                  ],
+                  "role": "assistant",
+                  "type": "message"
+                },
+                {
+                  "content": "What about tomorrow?",
+                  "role": "user"
+                }
+              ],
+              "observed_types": [
+                "function_call_output",
+                "message",
+                "user"
+              ],
+              "orphan_call_ids": [
+                "history-call-1"
+              ],
+              "reason": "ORPHAN_FUNCTION_OUTPUT_REACHED_MODEL",
+              "status": "FAIL"
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 1
+    },
+    {
+      "case_id": "session-limit-orphan-output",
+      "expected": "PASS",
+      "observed": "PASS",
+      "sdk_version": "0.20.0",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.20.0",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4322-session-limit-orphan-output",
+          "case_revision": 1,
+          "overall_status": "PASS",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "exception_type": null,
+              "model_input": [
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "text": "It is sunny.",
+                      "type": "output_text"
+                    }
+                  ],
+                  "role": "assistant",
+                  "type": "message"
+                },
+                {
+                  "content": "What about tomorrow?",
+                  "role": "user"
+                }
+              ],
+              "observed_types": [
+                "message",
+                "user"
+              ],
+              "orphan_call_ids": [],
+              "reason": "OK",
+              "status": "PASS"
+            },
+            "streaming": {
+              "exception_type": null,
+              "model_input": [
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "text": "It is sunny.",
+                      "type": "output_text"
+                    }
+                  ],
+                  "role": "assistant",
+                  "type": "message"
+                },
+                {
+                  "content": "What about tomorrow?",
+                  "role": "user"
+                }
+              ],
+              "observed_types": [
+                "message",
+                "user"
+              ],
+              "orphan_call_ids": [],
+              "reason": "OK",
+              "status": "PASS"
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 0
+    },
+    {
+      "case_id": "runstate-context-approval",
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "sdk_version": "0.19.4",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.19.4",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4244-runstate-context-approval",
+          "case_revision": 1,
+          "overall_status": "FAIL",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "approved_call_id": "approval-call-1",
+              "exception_type": null,
+              "final_output": null,
+              "initial_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "initial_model_call_count": 1,
+              "reason": "APPROVAL_NOT_HONORED_WITH_CONTEXT_OVERRIDE",
+              "restored_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_model_call_count": 0,
+              "resumed_model_remaining_steps": 1,
+              "state_json_round_trip": true,
+              "state_schema_version": "1.13",
+              "status": "FAIL",
+              "tool_invocation_count": 0,
+              "tool_invocations": []
+            },
+            "streaming": {
+              "approved_call_id": "approval-call-1",
+              "exception_type": null,
+              "final_output": null,
+              "initial_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "initial_model_call_count": 1,
+              "reason": "APPROVAL_NOT_HONORED_WITH_CONTEXT_OVERRIDE",
+              "restored_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_model_call_count": 0,
+              "resumed_model_remaining_steps": 1,
+              "state_json_round_trip": true,
+              "state_schema_version": "1.13",
+              "status": "FAIL",
+              "tool_invocation_count": 0,
+              "tool_invocations": []
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 1
+    },
+    {
+      "case_id": "runstate-context-approval",
+      "expected": "PASS",
+      "observed": "PASS",
+      "sdk_version": "0.20.0",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.20.0",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4244-runstate-context-approval",
+          "case_revision": 1,
+          "overall_status": "PASS",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "approved_call_id": "approval-call-1",
+              "exception_type": null,
+              "final_output": "done",
+              "initial_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "initial_model_call_count": 1,
+              "reason": "OK",
+              "restored_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_interruption_call_ids": [],
+              "resumed_model_call_count": 1,
+              "resumed_model_remaining_steps": 0,
+              "state_json_round_trip": true,
+              "state_schema_version": "1.15",
+              "status": "PASS",
+              "tool_invocation_count": 1,
+              "tool_invocations": [
+                {
+                  "arguments": {},
+                  "call_id": "approval-call-1",
+                  "principal": "ella"
+                }
+              ]
+            },
+            "streaming": {
+              "approved_call_id": "approval-call-1",
+              "exception_type": null,
+              "final_output": "done",
+              "initial_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "initial_model_call_count": 1,
+              "reason": "OK",
+              "restored_interruption_call_ids": [
+                "approval-call-1"
+              ],
+              "resumed_interruption_call_ids": [],
+              "resumed_model_call_count": 1,
+              "resumed_model_remaining_steps": 0,
+              "state_json_round_trip": true,
+              "state_schema_version": "1.15",
+              "status": "PASS",
+              "tool_invocation_count": 1,
+              "tool_invocations": [
+                {
+                  "arguments": {},
+                  "call_id": "approval-call-1",
+                  "principal": "ella"
+                }
+              ]
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 0
+    },
+    {
+      "case_id": "resumed-guardrail-atomicity",
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "sdk_version": "0.19.2",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.19.2",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4125-resumed-guardrail-atomicity",
+          "case_revision": 1,
+          "overall_status": "FAIL",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "durable_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "first_exception_type": null,
+              "followup_exception_type": null,
+              "followup_final_output": "done",
+              "followup_model_input": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                }
+              ],
+              "interruption_count": 1,
+              "reason": "OK",
+              "replayed_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "resume_exception_type": "OutputGuardrailTripwireTriggered",
+              "session_after_followup": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "logprobs": [],
+                      "text": "done",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "agentrunproof-followup-message",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "session_after_tripwire": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "side_effect_count": 1,
+              "status": "PASS",
+              "violations": []
+            },
+            "streaming": {
+              "durable_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                }
+              ],
+              "first_exception_type": null,
+              "followup_exception_type": null,
+              "followup_final_output": "done",
+              "followup_model_input": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                }
+              ],
+              "interruption_count": 1,
+              "reason": "COMMITTED_TOOL_PAIR_NOT_DURABLE",
+              "replayed_tool_sequence": [],
+              "resume_exception_type": "OutputGuardrailTripwireTriggered",
+              "session_after_followup": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "logprobs": [],
+                      "text": "done",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "agentrunproof-followup-message",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "session_after_tripwire": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                }
+              ],
+              "side_effect_count": 1,
+              "status": "FAIL",
+              "violations": [
+                "COMMITTED_TOOL_PAIR_NOT_DURABLE",
+                "FOLLOWUP_MODEL_INPUT_MISSING_TOOL_PAIR"
+              ]
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 1
+    },
+    {
+      "case_id": "resumed-guardrail-atomicity",
+      "expected": "PASS",
+      "observed": "PASS",
+      "sdk_version": "0.19.3",
+      "worker": {
+        "agentrunproof_version": "0.1.0",
+        "openai_agents_version": "0.19.3",
+        "python": "3.12.13",
+        "result": {
+          "case_id": "openai-agents-python-4125-resumed-guardrail-atomicity",
+          "case_revision": 1,
+          "overall_status": "PASS",
+          "public_api_only": true,
+          "variants": {
+            "non_streaming": {
+              "durable_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "first_exception_type": null,
+              "followup_exception_type": null,
+              "followup_final_output": "done",
+              "followup_model_input": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                }
+              ],
+              "interruption_count": 1,
+              "reason": "OK",
+              "replayed_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "resume_exception_type": "OutputGuardrailTripwireTriggered",
+              "session_after_followup": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "logprobs": [],
+                      "text": "done",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "agentrunproof-followup-message",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "session_after_tripwire": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "side_effect_count": 1,
+              "status": "PASS",
+              "violations": []
+            },
+            "streaming": {
+              "durable_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "first_exception_type": null,
+              "followup_exception_type": null,
+              "followup_final_output": "done",
+              "followup_model_input": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                }
+              ],
+              "interruption_count": 1,
+              "reason": "OK",
+              "replayed_tool_sequence": [
+                {
+                  "call_id": "call-approved",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "resume_exception_type": "OutputGuardrailTripwireTriggered",
+              "session_after_followup": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                },
+                {
+                  "content": "Continue",
+                  "role": "user"
+                },
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "logprobs": [],
+                      "text": "done",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "agentrunproof-followup-message",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "session_after_tripwire": [
+                {
+                  "content": "Use approval_tool",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "call-approved",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "call-approved",
+                  "output": "approved-result",
+                  "type": "function_call_output"
+                }
+              ],
+              "side_effect_count": 1,
+              "status": "PASS",
+              "violations": []
+            }
+          }
+        },
+        "schema_version": "agentrunproof.history-observation/v1"
+      },
+      "worker_exit": 0
+    }
+  ],
+  "schema_version": "agentrunproof.history-matrix/v1",
+  "wheel": {
+    "name": "agentrunproof-0.1.0-py3-none-any.whl",
+    "sha256": "84b875925e62e9e88d33177cfceef7669a82c74feee2dd101bff13a8d2ad8288"
+  }
+}
