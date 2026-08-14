@@ -71,6 +71,7 @@ _PRIVATE_SAFE_INVARIANTS = {
     "model_script_consumed",
     "state_transitions",
     "state_fork_isolation",
+    "recursive_approval_routing",
     "phase_contract",
     "session_replay",
 }
@@ -559,53 +560,46 @@ def _sanitize_phase_contracts(
             callbacks = cast(dict[str, Any], phase.callback_markers)
             before = callbacks.get("before")
             probe_callbacks = callbacks.get("probes")
-            encoded.append(
-                to_json_value(
-                    {
-                        "phase_id": phase_names[phase.phase_id],
-                        "input_kind": phase.input_kind,
-                        "source_phase": (
-                            phase_names.get(phase.source_phase)
-                            if phase.source_phase is not None
-                            else None
-                        ),
-                        "json_round_trip": phase.json_round_trip,
-                        "decisions": list(phase.decisions),
-                        "sibling_decisions": list(phase.sibling_decisions),
-                        "expected_outcome": {
-                            "kind": phase.expected_outcome.kind.value,
-                            "interruption_count": phase.expected_outcome.interruption_count,
-                            "exception_type": expected_exception,
-                        },
-                        "expected_tool_counts_delta": {
-                            _public_name(name, public=public): count
-                            for name, count in sorted(phase.expected_tool_counts_delta.items())
-                        },
-                        "expected_probes_after": {
-                            _public_name(name, public=public): value
-                            for name, value in sorted(phase.expected_probes_after.items())
-                        },
-                        "callback_markers": {
-                            "before": (
-                                _public_name(before, public=public)
-                                if isinstance(before, str)
-                                else None
-                            ),
-                            "probes": {
-                                _public_name(name, public=public): _public_name(
-                                    marker, public=public
-                                )
-                                for name, marker in sorted(
-                                    cast(dict[str, str], probe_callbacks).items()
-                                )
-                            }
-                            if isinstance(probe_callbacks, dict)
-                            else {},
-                        },
-                        "model_group": _public_name(phase.model_group, public=public),
+            phase_payload: dict[str, Any] = {
+                "phase_id": phase_names[phase.phase_id],
+                "input_kind": phase.input_kind,
+                "source_phase": (
+                    phase_names.get(phase.source_phase) if phase.source_phase is not None else None
+                ),
+                "json_round_trip": phase.json_round_trip,
+                "decisions": list(phase.decisions),
+                "sibling_decisions": list(phase.sibling_decisions),
+                "expected_outcome": {
+                    "kind": phase.expected_outcome.kind.value,
+                    "interruption_count": phase.expected_outcome.interruption_count,
+                    "exception_type": expected_exception,
+                },
+                "expected_tool_counts_delta": {
+                    _public_name(name, public=public): count
+                    for name, count in sorted(phase.expected_tool_counts_delta.items())
+                },
+                "expected_probes_after": {
+                    _public_name(name, public=public): value
+                    for name, value in sorted(phase.expected_probes_after.items())
+                },
+                "callback_markers": {
+                    "before": (
+                        _public_name(before, public=public) if isinstance(before, str) else None
+                    ),
+                    "probes": {
+                        _public_name(name, public=public): _public_name(marker, public=public)
+                        for name, marker in sorted(cast(dict[str, str], probe_callbacks).items())
                     }
-                )
-            )
+                    if isinstance(probe_callbacks, dict)
+                    else {},
+                },
+                "model_group": _public_name(phase.model_group, public=public),
+            }
+            if phase.save_sibling_state:
+                phase_payload["save_sibling_state"] = True
+            if phase.saved_sibling_from is not None:
+                phase_payload["saved_sibling_from"] = phase_names.get(phase.saved_sibling_from)
+            encoded.append(to_json_value(phase_payload))
         result[variant.value] = encoded
     return result
 
@@ -628,12 +622,13 @@ def _validate_phase_contracts(
         "callback_markers",
         "model_group",
     }
-    optional = {"sibling_decisions"}
+    optional = {"sibling_decisions", "save_sibling_state", "saved_sibling_from"}
     for variant_name, raw_phases in value.items():
         if not isinstance(raw_phases, list) or not raw_phases:
             raise CertificateError(f"Invalid phase contracts for {variant_name}.")
         phases: list[PhaseContract] = []
         seen: set[str] = set()
+        consumed_saved_siblings: set[str] = set()
         for index, raw_phase in enumerate(raw_phases):
             label = f"phase_contracts.{variant_name}[{index}]"
             if (
@@ -679,6 +674,39 @@ def _validate_phase_contracts(
                 raise CertificateError(
                     f"{label}.sibling_decisions require a direct resume with no subject decisions."
                 )
+            save_sibling_state = raw_phase.get("save_sibling_state", False)
+            saved_sibling_from = raw_phase.get("saved_sibling_from")
+            if not isinstance(save_sibling_state, bool):
+                raise CertificateError(f"Invalid {label}.save_sibling_state.")
+            if save_sibling_state and not sibling_decisions:
+                raise CertificateError(
+                    f"{label}.save_sibling_state requires an exact sibling decision."
+                )
+            if saved_sibling_from is not None:
+                if (
+                    not isinstance(saved_sibling_from, str)
+                    or saved_sibling_from not in seen
+                    or saved_sibling_from in consumed_saved_siblings
+                ):
+                    raise CertificateError(f"Invalid {label}.saved_sibling_from.")
+                saved_contract = next(
+                    (phase for phase in phases if phase.phase_id == saved_sibling_from),
+                    None,
+                )
+                if (
+                    input_kind != "resume"
+                    or round_trip
+                    or decisions
+                    or sibling_decisions
+                    or save_sibling_state
+                    or saved_contract is None
+                    or not saved_contract.save_sibling_state
+                    or source_phase != saved_contract.source_phase
+                ):
+                    raise CertificateError(
+                        f"{label}.saved_sibling_from must consume one direct saved branch."
+                    )
+                consumed_saved_siblings.add(saved_sibling_from)
             expected_outcome = _decode_expected_outcome(
                 raw_phase.get("expected_outcome"), f"{label}.expected_outcome"
             )
@@ -718,9 +746,16 @@ def _validate_phase_contracts(
                     callback_markers=cast(dict[str, Any], callbacks),
                     model_group=model_group,
                     sibling_decisions=tuple(sibling_decisions),
+                    save_sibling_state=save_sibling_state,
+                    saved_sibling_from=saved_sibling_from,
                 )
             )
             seen.add(phase_id)
+        saved_phase_ids = {phase.phase_id for phase in phases if phase.save_sibling_state}
+        if saved_phase_ids != consumed_saved_siblings:
+            raise CertificateError(
+                f"Saved sibling phase contracts for {variant_name} must be consumed exactly once."
+            )
         try:
             variant = RunVariant(variant_name)
         except ValueError as error:
@@ -1079,15 +1114,23 @@ def _validate_state_transition(value: Any, label: str) -> dict[str, JsonValue]:
         "sibling_interruption_call_ids",
         "sibling_decisions",
     }
+    saved_sibling_fields = {
+        "sibling_state_saved",
+        "saved_sibling_from",
+        "saved_sibling_state_sha256",
+    }
     if (
         not isinstance(value, dict)
         or not required.issubset(value)
-        or not set(value).issubset(required | fork_fields)
+        or not set(value).issubset(required | fork_fields | saved_sibling_fields)
     ):
         raise CertificateError(f"Invalid {label} fields.")
     present_fork_fields = set(value) & fork_fields
     if present_fork_fields and present_fork_fields != fork_fields:
         raise CertificateError(f"Invalid partial {label} state-fork fields.")
+    present_saved_sibling_fields = set(value) & saved_sibling_fields
+    if present_saved_sibling_fields and present_saved_sibling_fields != saved_sibling_fields:
+        raise CertificateError(f"Invalid partial {label} saved-sibling fields.")
     if value.get("kind") not in {"literal", "resume"}:
         raise CertificateError(f"Invalid {label}.kind.")
     source = value.get("source_phase")
@@ -1145,6 +1188,23 @@ def _validate_state_transition(value: Any, label: str) -> dict[str, JsonValue]:
             or unchanged is not None
         ):
             raise CertificateError(f"Unexpected {label} state-fork observation.")
+    if present_saved_sibling_fields:
+        state_saved = value.get("sibling_state_saved")
+        saved_from = value.get("saved_sibling_from")
+        state_digest = value.get("saved_sibling_state_sha256")
+        if not isinstance(state_saved, bool):
+            raise CertificateError(f"Invalid {label}.sibling_state_saved.")
+        if saved_from is not None and (not isinstance(saved_from, str) or not saved_from):
+            raise CertificateError(f"Invalid {label}.saved_sibling_from.")
+        if state_digest is not None and (
+            not isinstance(state_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", state_digest)
+        ):
+            raise CertificateError(f"Invalid {label}.saved_sibling_state_sha256.")
+        if state_saved:
+            if saved_from is not None or state_digest is None:
+                raise CertificateError(f"Invalid {label} saved-sibling creation observation.")
+        elif saved_from is None and state_digest is not None:
+            raise CertificateError(f"Unexpected {label} saved-sibling digest.")
     return cast(dict[str, JsonValue], copy.deepcopy(value))
 
 
@@ -1495,6 +1555,9 @@ def _sanitize_private_phase_observation(
         source_phase = transition.get("source_phase")
         if isinstance(source_phase, str):
             transition["source_phase"] = _public_name(source_phase, public=False)
+        saved_sibling_from = transition.get("saved_sibling_from")
+        if isinstance(saved_sibling_from, str):
+            transition["saved_sibling_from"] = _public_name(saved_sibling_from, public=False)
         schema_version = transition.get("state_schema_version")
         if isinstance(schema_version, str):
             transition["state_schema_version"] = _public_name(schema_version, public=False)
@@ -1647,6 +1710,9 @@ def _validate_private_phase_contract_shapes(value: Any) -> None:
             source = contract.get("source_phase")
             if source is not None and not _is_name_digest(source):
                 raise CertificateError(f"{label}.source_phase must be a SHA-256 name digest.")
+            saved_sibling_from = contract.get("saved_sibling_from")
+            if saved_sibling_from is not None and not _is_name_digest(saved_sibling_from):
+                raise CertificateError(f"{label}.saved_sibling_from must be a SHA-256 name digest.")
             outcome = contract.get("expected_outcome")
             if isinstance(outcome, dict):
                 exception_type = outcome.get("exception_type")
@@ -1730,6 +1796,9 @@ def _validate_private_phase_observation_shape(value: Any, *, label: str) -> None
     source = transition.get("source_phase")
     if source is not None and not _is_name_digest(source):
         raise CertificateError(f"{label}.state_transition source is not redacted.")
+    saved_sibling_from = transition.get("saved_sibling_from")
+    if saved_sibling_from is not None and not _is_name_digest(saved_sibling_from):
+        raise CertificateError(f"{label}.saved sibling source is not redacted.")
     schema_version = transition.get("state_schema_version")
     if schema_version is not None and not _is_name_digest(schema_version):
         raise CertificateError(f"{label}.state schema version is not redacted.")

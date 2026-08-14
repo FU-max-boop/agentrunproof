@@ -77,6 +77,8 @@ class ResumeInput:
     decisions: tuple[Decision, ...] = ()
     json_round_trip: bool = True
     sibling_decisions: tuple[Decision, ...] = ()
+    save_sibling_state: bool = False
+    saved_sibling_from: str | None = None
 
     def __post_init__(self) -> None:
         if not self.source_phase:
@@ -91,6 +93,22 @@ class ResumeInput:
             raise ValueError(
                 "Sibling decisions require a direct resume with no decisions on the subject state."
             )
+        if self.save_sibling_state and not self.sibling_decisions:
+            raise ValueError("Saving a sibling state requires an exact sibling decision.")
+        if self.saved_sibling_from is not None:
+            if not self.saved_sibling_from or any(
+                character.isspace() for character in self.saved_sibling_from
+            ):
+                raise ValueError("A saved sibling source must be a non-empty phase ID.")
+            if (
+                self.json_round_trip
+                or self.decisions
+                or self.sibling_decisions
+                or self.save_sibling_state
+            ):
+                raise ValueError(
+                    "A saved sibling resume must use the direct saved state without new decisions."
+                )
 
 
 PhaseInput = LiteralInput | ResumeInput
@@ -164,10 +182,31 @@ class ScenarioPlan:
         if len(set(phase_ids)) != len(phase_ids):
             raise ValueError("Scenario phase IDs must be unique.")
         seen: set[str] = set()
+        saved_sibling_sources: dict[str, str] = {}
+        consumed_saved_siblings: set[str] = set()
         models_by_group: dict[str, DeterministicModel] = {}
         for phase in self.phases:
-            if isinstance(phase.input, ResumeInput) and phase.input.source_phase not in seen:
-                raise ValueError("A resume input must reference an earlier phase in the same plan.")
+            if isinstance(phase.input, ResumeInput):
+                if phase.input.source_phase not in seen:
+                    raise ValueError(
+                        "A resume input must reference an earlier phase in the same plan."
+                    )
+                saved_source = phase.input.saved_sibling_from
+                if saved_source is not None:
+                    original_source = saved_sibling_sources.get(saved_source)
+                    if original_source is None:
+                        raise ValueError(
+                            "A saved sibling resume must reference an earlier saving phase."
+                        )
+                    if saved_source in consumed_saved_siblings:
+                        raise ValueError("A saved sibling state can be resumed only once.")
+                    if phase.input.source_phase != original_source:
+                        raise ValueError(
+                            "A saved sibling resume must retain the fork's original source phase."
+                        )
+                    consumed_saved_siblings.add(saved_source)
+                if phase.input.save_sibling_state:
+                    saved_sibling_sources[phase.phase_id] = phase.input.source_phase
             existing_model = models_by_group.setdefault(phase.model_group, phase.model)
             if existing_model is not phase.model:
                 raise ValueError(
@@ -175,6 +214,10 @@ class ScenarioPlan:
                     "use distinct groups for independent scripts."
                 )
             seen.add(phase.phase_id)
+        unconsumed_saved_siblings = set(saved_sibling_sources) - consumed_saved_siblings
+        if unconsumed_saved_siblings:
+            names = ", ".join(sorted(unconsumed_saved_siblings))
+            raise ValueError(f"Saved sibling states must be resumed exactly once: {names}.")
 
 
 @dataclass(frozen=True)
@@ -190,6 +233,8 @@ class PhaseContract:
     callback_markers: Mapping[str, Any]
     model_group: str
     sibling_decisions: tuple[dict[str, Any], ...] = ()
+    save_sibling_state: bool = False
+    saved_sibling_from: str | None = None
 
 
 ScenarioFactory = Callable[[RunVariant], ScenarioCase | ScenarioPlan]

@@ -45,6 +45,7 @@ def evaluate_invariants(
         "model_script_consumed": _model_script_consumed,
         "state_transitions": _state_transitions,
         "state_fork_isolation": _state_fork_isolation,
+        "recursive_approval_routing": _recursive_approval_routing,
         "phase_contract": _phase_contract,
         "session_replay": _session_replay,
     }
@@ -418,6 +419,7 @@ def _state_transitions(
             continue
         variant_failures: dict[str, Any] = {}
         phases_by_id = {phase.phase_id: phase for phase in observation.phases}
+        contracts_by_id = {contract.phase_id: contract for contract in contracts}
         for phase, contract in zip(observation.phases, contracts, strict=True):
             transition = phase.state_transition
             problems: list[str] = []
@@ -494,6 +496,14 @@ def _state_transitions(
                     for decision in expected_decisions
                 ):
                     problems.append("DECISION_TARGET_NOT_INTERRUPTED")
+            problems.extend(
+                _saved_sibling_transition_problems(
+                    transition=transition,
+                    contract=contract,
+                    phases_by_id=phases_by_id,
+                    contracts_by_id=contracts_by_id,
+                )
+            )
             if problems:
                 variant_failures[phase.phase_id] = problems
         if variant_failures:
@@ -504,6 +514,46 @@ def _state_transitions(
         "state_transitions",
         {"variants": len(observations), "round_trips": _round_trip_count(phase_contracts)},
     )
+
+
+def _saved_sibling_transition_problems(
+    *,
+    transition: dict[str, JsonValue],
+    contract: PhaseContract,
+    phases_by_id: dict[str, PhaseObservation],
+    contracts_by_id: dict[str, PhaseContract],
+) -> list[str]:
+    problems: list[str] = []
+    state_saved = transition.get("sibling_state_saved", False)
+    saved_from = transition.get("saved_sibling_from")
+    state_digest = transition.get("saved_sibling_state_sha256")
+    if not isinstance(state_saved, bool):
+        problems.append("SAVED_SIBLING_FLAG_INVALID")
+    elif state_saved != contract.save_sibling_state:
+        problems.append("SAVED_SIBLING_FLAG_MISMATCH")
+    if saved_from != contract.saved_sibling_from:
+        problems.append("SAVED_SIBLING_SOURCE_MISMATCH")
+    if contract.save_sibling_state:
+        if not _sha256_digest(state_digest):
+            problems.append("SAVED_SIBLING_DIGEST_MISSING")
+    elif contract.saved_sibling_from is not None:
+        if not _sha256_digest(state_digest):
+            problems.append("RESTORED_SIBLING_DIGEST_MISSING")
+        origin_phase = phases_by_id.get(contract.saved_sibling_from)
+        origin_contract = contracts_by_id.get(contract.saved_sibling_from)
+        if origin_phase is None or origin_contract is None:
+            problems.append("SAVED_SIBLING_PHASE_MISSING")
+        elif not origin_contract.save_sibling_state:
+            problems.append("SAVED_SIBLING_PHASE_NOT_A_FORK")
+        else:
+            origin_transition = origin_phase.state_transition
+            if origin_transition.get("sibling_state_saved") is not True:
+                problems.append("SAVED_SIBLING_ORIGIN_NOT_RECORDED")
+            if origin_transition.get("saved_sibling_state_sha256") != state_digest:
+                problems.append("SAVED_SIBLING_STATE_CHANGED")
+    elif state_digest is not None:
+        problems.append("UNEXPECTED_SAVED_SIBLING_DIGEST")
+    return problems
 
 
 def _round_trip_count(
@@ -629,6 +679,139 @@ def _unexpected_state_fork_data(transition: dict[str, JsonValue]) -> bool:
         or transition.get("subject_state_unchanged") is not None
         or transition.get("sibling_interruption_call_ids", []) != []
         or transition.get("sibling_decisions", []) != []
+    )
+
+
+def _recursive_approval_routing(
+    scenario: Scenario,
+    observations: dict[RunVariant, Observation],
+    phase_contracts: dict[RunVariant, tuple[PhaseContract, ...]] | None,
+) -> InvariantResult:
+    del scenario
+    if phase_contracts is None:
+        return _not_run("recursive_approval_routing", "NO_PHASE_CONTRACTS")
+    failures: dict[str, Any] = {}
+    branch_count = 0
+    for variant, observation in observations.items():
+        contracts = phase_contracts.get(variant)
+        if contracts is None or len(contracts) != len(observation.phases):
+            failures[variant.value] = {
+                "reason": "INVALID_RECURSIVE_APPROVAL_CONTRACT",
+                "problem": "PHASE_CONTRACT_MISMATCH",
+            }
+            continue
+        approved_contracts = [
+            contract for contract in contracts if contract.saved_sibling_from is not None
+        ]
+        if len(approved_contracts) != 1:
+            failures[variant.value] = {
+                "reason": "INVALID_RECURSIVE_APPROVAL_CONTRACT",
+                "problem": "EXPECTED_ONE_SAVED_APPROVAL_BRANCH",
+            }
+            continue
+        approved_contract = approved_contracts[0]
+        contracts_by_id = {contract.phase_id: contract for contract in contracts}
+        phases_by_id = {phase.phase_id: phase for phase in observation.phases}
+        fork_contract = contracts_by_id.get(approved_contract.saved_sibling_from or "")
+        fork_phase = phases_by_id.get(approved_contract.saved_sibling_from or "")
+        approved_phase = phases_by_id.get(approved_contract.phase_id)
+        expected_approved_delta = dict(approved_contract.expected_tool_counts_delta)
+        contract_problems: list[str] = []
+        if fork_contract is None or fork_phase is None or approved_phase is None:
+            contract_problems.append("BRANCH_PHASE_MISSING")
+        else:
+            if not fork_contract.save_sibling_state:
+                contract_problems.append("FORK_DOES_NOT_SAVE_SIBLING")
+            if len(fork_contract.sibling_decisions) != 1 or (
+                fork_contract.sibling_decisions[0].get("action") != "approve"
+            ):
+                contract_problems.append("FORK_MUST_APPROVE_EXACTLY_ONE_SIBLING")
+            if (
+                fork_contract.expected_outcome.kind is not OutcomeKind.INTERRUPTED
+                or fork_contract.expected_outcome.interruption_count != 1
+            ):
+                contract_problems.append("UNTOUCHED_BRANCH_MUST_EXPECT_ONE_INTERRUPTION")
+            if any(fork_contract.expected_tool_counts_delta.values()):
+                contract_problems.append("UNTOUCHED_BRANCH_MUST_EXPECT_ZERO_EFFECTS")
+            if approved_contract.expected_outcome.kind is not OutcomeKind.COMPLETED:
+                contract_problems.append("APPROVED_BRANCH_MUST_EXPECT_COMPLETION")
+            if not expected_approved_delta or not any(expected_approved_delta.values()):
+                contract_problems.append("APPROVED_BRANCH_MUST_EXPECT_AN_EFFECT")
+            contract_problems.extend(
+                _saved_sibling_transition_problems(
+                    transition=approved_phase.state_transition,
+                    contract=approved_contract,
+                    phases_by_id=phases_by_id,
+                    contracts_by_id=contracts_by_id,
+                )
+            )
+        if contract_problems:
+            failures[variant.value] = {
+                "reason": "INVALID_RECURSIVE_APPROVAL_CONTRACT",
+                "problems": sorted(set(contract_problems)),
+            }
+            continue
+        assert fork_phase is not None
+        assert approved_phase is not None
+        branch_count += 1
+        if (
+            fork_phase.status != "PASS"
+            or fork_phase.exception is not None
+            or fork_phase.interruption_count != 1
+            or any(fork_phase.tool_counts_delta.values())
+        ):
+            failures[variant.value] = {
+                "reason": "UNTOUCHED_SIBLING_WAS_NOT_ISOLATED",
+                "phase_id": fork_phase.phase_id,
+                "status": fork_phase.status,
+                "interruption_count": fork_phase.interruption_count,
+                "tool_counts_delta": fork_phase.tool_counts_delta,
+            }
+        elif approved_phase.interruption_count > 0 and approved_phase.exception is None:
+            failures[variant.value] = {
+                "reason": "APPROVED_NESTED_STATE_REMAINED_INTERRUPTED",
+                "phase_id": approved_phase.phase_id,
+                "interruption_count": approved_phase.interruption_count,
+                "tool_counts_delta": approved_phase.tool_counts_delta,
+            }
+        elif approved_phase.status != "PASS" or approved_phase.exception is not None:
+            failures[variant.value] = {
+                "reason": "APPROVED_NESTED_STATE_ERRORED",
+                "phase_id": approved_phase.phase_id,
+                "status": approved_phase.status,
+                "exception": approved_phase.exception,
+            }
+        elif _is_null_payload(approved_phase.final_output):
+            failures[variant.value] = {
+                "reason": "APPROVED_NESTED_OUTPUT_MISSING",
+                "phase_id": approved_phase.phase_id,
+            }
+        elif approved_phase.tool_counts_delta != expected_approved_delta:
+            failures[variant.value] = {
+                "reason": "APPROVED_NESTED_EFFECT_MISMATCH",
+                "phase_id": approved_phase.phase_id,
+                "expected": expected_approved_delta,
+                "actual": approved_phase.tool_counts_delta,
+            }
+    if failures:
+        reasons: set[str] = {
+            cast(str, value["reason"])
+            for value in failures.values()
+            if isinstance(value, dict) and isinstance(value.get("reason"), str)
+        }
+        reason = next(iter(reasons)) if len(reasons) == 1 else "RECURSIVE_APPROVAL_ROUTING_MISMATCH"
+        return _fail("recursive_approval_routing", reason, failures)
+    if branch_count == 0:
+        return _not_run("recursive_approval_routing", "NO_SAVED_APPROVAL_BRANCH")
+    return _pass(
+        "recursive_approval_routing",
+        {"variants": len(observations), "approved_branches": branch_count},
+    )
+
+
+def _is_null_payload(value: Any) -> bool:
+    return value is None or (
+        isinstance(value, dict) and value.get("redacted") is True and value.get("kind") == "null"
     )
 
 

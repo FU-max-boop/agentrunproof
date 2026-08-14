@@ -16,6 +16,10 @@ The first public contract covers the standard text `Runner` and these released p
 - selected serializable `RunState` interruption, exact decision, and resume transitions;
 - one selected sibling-`RunState` approval-isolation scenario using repeated public
   `RunResult.to_state()` calls;
+- one selected two-edge `Agent.as_tool` approval-routing scenario that resumes one decided direct
+  sibling while leaving the untouched sibling interrupted;
+- one selected recursive `Agent.as_tool` approval-routing scenario that crosses the durable
+  `RunState` JSON boundary and applies one exact approval after restoration;
 - function-tool calls and model-visible function-tool contracts;
 - one pinned output-guardrail durability scenario expressed through public APIs.
 
@@ -37,8 +41,11 @@ The v0.1.x engine can report these invariant families:
 6. **State transitions:** a resume may bind canonical JSON transport, public `RunState.from_json()` reconstruction, restored-state equality, interruption identities, and exact approve/reject decisions.
 7. **State-fork isolation:** a decision applied to one direct sibling state must not mutate another
    state returned from the same paused result.
-8. **Phase contract:** observed tool-count deltas and scenario probes must match the declared value after every phase.
-9. **Session replay:** persisted tool events observed before a phase must appear in the first model input when that comparison is available.
+8. **Recursive approval routing:** a saved or JSON-restored approved state must resume through its
+   declared nested agent-tool checkpoints, complete without another interruption, and commit its
+   expected effect.
+9. **Phase contract:** observed tool-count deltas and scenario probes must match the declared value after every phase.
+10. **Session replay:** persisted tool events observed before a phase must appear in the first model input when that comparison is available.
 
 An invariant is evaluated only when the scenario declares the observations required to judge it. Unsupported or unobserved conditions produce `NOT_RUN`, never an inferred pass.
 
@@ -85,6 +92,17 @@ AgentRunProof earns an upstream integration by evidence rather than by requestin
 4. Propose the smallest useful upstream surface: a referenced regression fixture, an optional development/nightly conformance job, or a documentation link.
 
 Official runtime dependency status is not a v0.1 goal. A public upstream citation, accepted reproducer, test reuse, documentation reference, or maintainer acknowledgement satisfies the external-recognition gate.
+
+That gate was first met on 2026-08-14: an OpenAI Agents maintainer acknowledged the reported
+checkpoint-isolation defect and merged PR #4413 with an explicit reference to the report. The
+result recognizes AgentRunProof's diagnostic evidence; it does not imply an official SDK
+dependency or blanket endorsement.
+
+The subsequent recursive and serialized cases were used to validate upstream PR #4414 before its
+merge as `50d65f65`. A
+community-tool entry was proposed on PR #4381; the maintainer declined the listing to keep that
+guide limited to SDK-maintained APIs while explicitly welcoming future findings backed by
+AgentRunProof. The project therefore remains external to the SDK.
 
 ## Release gates
 

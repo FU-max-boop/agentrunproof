@@ -15,6 +15,8 @@ from agents import (
 from agentrunproof._canonical import sha256_hex
 from agentrunproof.builtins import (
     BASIC_TOOL_SESSION_PARITY,
+    RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING,
+    RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_SERIALIZATION,
     RUNSTATE_SIBLING_APPROVAL_ISOLATION,
 )
 from agentrunproof.engine import run_scenario
@@ -74,6 +76,64 @@ def test_sibling_decisions_require_one_direct_undecided_subject() -> None:
             sibling_decisions=(Decision("call-1"), Decision("call-1")),
         )
 
+    with pytest.raises(ValueError, match="requires an exact sibling decision"):
+        ResumeInput(
+            source_phase="initial",
+            json_round_trip=False,
+            save_sibling_state=True,
+        )
+    with pytest.raises(ValueError, match="without new decisions"):
+        ResumeInput(
+            source_phase="initial",
+            decisions=(Decision("call-1"),),
+            json_round_trip=False,
+            saved_sibling_from="fork",
+        )
+
+
+def test_saved_sibling_state_requires_one_prior_matching_fork() -> None:
+    model = DeterministicModel([[assistant_message("unused")]])
+    agent = Agent(name="saved sibling contract agent", model=model)
+
+    def phase(phase_id: str, input_value: LiteralInput | ResumeInput) -> ScenarioPhase:
+        return ScenarioPhase(
+            phase_id=phase_id,
+            agent=agent,
+            input=input_value,
+            model=model,
+            model_group="saved-sibling-model",
+        )
+
+    initial = phase("initial", LiteralInput("start"))
+    fork = phase(
+        "fork",
+        ResumeInput(
+            source_phase="initial",
+            json_round_trip=False,
+            sibling_decisions=(Decision("call-1"),),
+            save_sibling_state=True,
+        ),
+    )
+    saved = ResumeInput(
+        source_phase="initial",
+        json_round_trip=False,
+        saved_sibling_from="fork",
+    )
+
+    with pytest.raises(ValueError, match="earlier saving phase"):
+        ScenarioPlan((initial, phase("missing", saved)))
+    with pytest.raises(ValueError, match="must be resumed exactly once"):
+        ScenarioPlan((initial, fork))
+    with pytest.raises(ValueError, match="only once"):
+        ScenarioPlan(
+            (
+                initial,
+                fork,
+                phase("first-use", saved),
+                phase("second-use", saved),
+            )
+        )
+
 
 @pytest.mark.asyncio
 async def test_runstate_sibling_isolation_records_exact_public_state_fork() -> None:
@@ -121,6 +181,47 @@ async def test_runstate_sibling_isolation_records_exact_public_state_fork() -> N
         assert invariant.status == "FAIL"
         assert invariant.reason == "SIBLING_STATE_MUTATED"
         assert proof.status == "FAIL"
+
+
+def test_recursive_agent_tool_approval_declares_two_direct_sibling_branches() -> None:
+    plan = RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING.factory(RunVariant.NON_STREAMING)
+
+    assert isinstance(plan, ScenarioPlan)
+    assert [phase.phase_id for phase in plan.phases] == [
+        "initial",
+        "untouched-sibling",
+        "approved-sibling",
+    ]
+    untouched = plan.phases[1]
+    approved = plan.phases[2]
+    assert isinstance(untouched.input, ResumeInput)
+    assert untouched.input.json_round_trip is False
+    assert untouched.input.save_sibling_state is True
+    assert untouched.input.sibling_decisions == (
+        Decision("agentrunproof-recursive-protected-call-1"),
+    )
+    assert untouched.expected_outcome == ExpectedOutcome(
+        kind=OutcomeKind.INTERRUPTED,
+        interruption_count=1,
+    )
+    assert isinstance(approved.input, ResumeInput)
+    assert approved.input.saved_sibling_from == "untouched-sibling"
+    assert approved.expected_outcome == ExpectedOutcome()
+    assert approved.expected_tool_counts_delta == {"protected_effect": 1}
+
+
+def test_recursive_agent_tool_serialization_declares_one_durable_approval_resume() -> None:
+    plan = RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_SERIALIZATION.factory(RunVariant.NON_STREAMING)
+
+    assert isinstance(plan, ScenarioPlan)
+    assert [phase.phase_id for phase in plan.phases] == ["initial", "serialized-approved"]
+    approved = plan.phases[1]
+    assert isinstance(approved.input, ResumeInput)
+    assert approved.input.source_phase == "initial"
+    assert approved.input.json_round_trip is True
+    assert approved.input.decisions == (Decision("agentrunproof-recursive-protected-call-1"),)
+    assert approved.expected_outcome == ExpectedOutcome()
+    assert approved.expected_tool_counts_delta == {"protected_effect": 1}
 
 
 def test_one_model_group_cannot_hide_an_independent_unconsumed_script() -> None:

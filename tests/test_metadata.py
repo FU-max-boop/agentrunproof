@@ -7,7 +7,7 @@ import agentrunproof
 
 def test_distribution_and_package_versions_match() -> None:
     assert importlib.metadata.version("agentrunproof") == agentrunproof.__version__
-    assert agentrunproof.__version__ == "0.1.1"
+    assert agentrunproof.__version__ == "0.1.2"
 
 
 def test_documented_scenario_building_surface_is_public() -> None:

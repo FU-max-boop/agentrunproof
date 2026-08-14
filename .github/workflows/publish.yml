@@ -8,7 +8,7 @@ on:
       tag:
         description: Existing final GitHub Release tag to publish
         required: true
-        default: v0.1.1
+        default: v0.1.2
         type: string
       publish:
         description: Upload the verified distributions to PyPI
@@ -57,11 +57,19 @@ jobs:
               evidence_directory=evidence/history/v1
               evidence_member=matrix.json
               evidence_checker=check-history-bundle
+              evidence_kind=single-member
               ;;
             v0.1.1)
               evidence_directory=evidence/current/runstate-sibling-approval-isolation/v1
               evidence_member=certificate.json
               evidence_checker=check-current-bundle
+              evidence_kind=single-member
+              ;;
+            v0.1.2)
+              evidence_directory=evidence/upstream-comparison/v1
+              evidence_member=
+              evidence_checker=check-upstream-bundle
+              evidence_kind=upstream-comparison
               ;;
             *)
               echo "Unsupported release evidence profile: $RELEASE_TAG" >&2
@@ -72,10 +80,12 @@ jobs:
             printf 'evidence-directory=%s\n' "$evidence_directory"
             printf 'evidence-member=%s\n' "$evidence_member"
             printf 'evidence-checker=%s\n' "$evidence_checker"
+            printf 'evidence-kind=%s\n' "$evidence_kind"
           } >> "$GITHUB_OUTPUT"
       - name: Download and bind the final GitHub Release
         env:
           EVIDENCE_DIRECTORY: ${{ steps.release_profile.outputs.evidence-directory }}
+          EVIDENCE_KIND: ${{ steps.release_profile.outputs.evidence-kind }}
           EVIDENCE_MEMBER: ${{ steps.release_profile.outputs.evidence-member }}
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
@@ -90,31 +100,105 @@ jobs:
           test "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
             --jq .immutable)" = true
 
+          version="${RELEASE_TAG#v}"
+          committed_bundle="$EVIDENCE_DIRECTORY/bundle.json"
+          test -f "$committed_bundle"
+          if [[ "$EVIDENCE_KIND" = upstream-comparison ]]; then
+            test -z "$EVIDENCE_MEMBER"
+            PYTHONPATH=src python -m agentrunproof check-upstream-bundle "$committed_bundle"
+          else
+            test "$EVIDENCE_KIND" = single-member
+            test -n "$EVIDENCE_MEMBER"
+            test -f "$EVIDENCE_DIRECTORY/$EVIDENCE_MEMBER"
+          fi
+
+          expected_assets="$RUNNER_TEMP/expected-release-assets"
+          EVIDENCE_KIND="$EVIDENCE_KIND" \
+          EVIDENCE_MEMBER="$EVIDENCE_MEMBER" \
+          VERSION="$version" \
+          python - "$committed_bundle" > "$expected_assets" <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          bundle_path = Path(sys.argv[1])
+          bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+          version = os.environ["VERSION"]
+          names = {
+              f"agentrunproof-{version}-py3-none-any.whl",
+              f"agentrunproof-{version}.tar.gz",
+              "SHA256SUMS",
+              "bundle.json",
+          }
+          if os.environ["EVIDENCE_KIND"] == "upstream-comparison":
+              harness_wheel = bundle["harness"]["wheel"]["path"]
+              if harness_wheel != f"agentrunproof-{version}-py3-none-any.whl":
+                  raise SystemExit("comparison harness wheel does not match the release wheel")
+              names.add(harness_wheel)
+              names.update(
+                  target["source_wheel"]["path"]
+                  for target in bundle["targets"]
+                  if target["kind"] == "source-built-wheel"
+              )
+              names.update(run["certificate"]["path"] for run in bundle["runs"])
+          else:
+              names.add(os.environ["EVIDENCE_MEMBER"])
+          if any(Path(name).name != name or "\n" in name for name in names):
+              raise SystemExit("release asset names must be basenames")
+          print("\n".join(sorted(names)))
+          PY
+
           mkdir release-assets
+          download_patterns=()
+          while IFS= read -r asset_name; do
+            test -n "$asset_name"
+            download_patterns+=(--pattern "$asset_name")
+          done < "$expected_assets"
           gh release download "$RELEASE_TAG" \
-            --pattern 'agentrunproof-*.whl' \
-            --pattern 'agentrunproof-*.tar.gz' \
-            --pattern SHA256SUMS \
-            --pattern "$EVIDENCE_MEMBER" \
-            --pattern bundle.json \
+            "${download_patterns[@]}" \
             --dir release-assets
+
+          python - "$expected_assets" release-assets <<'PY'
+          import sys
+          from pathlib import Path
+
+          expected = set(Path(sys.argv[1]).read_text(encoding="utf-8").splitlines())
+          actual = {path.name for path in Path(sys.argv[2]).iterdir() if path.is_file()}
+          if actual != expected:
+              raise SystemExit(
+                  f"release asset names differ; missing={sorted(expected - actual)}, "
+                  f"extra={sorted(actual - expected)}"
+              )
+          PY
 
           shopt -s nullglob
           wheels=(release-assets/agentrunproof-*.whl)
           sdists=(release-assets/agentrunproof-*.tar.gz)
-          assets=(release-assets/*)
           test "${#wheels[@]}" -eq 1
           test "${#sdists[@]}" -eq 1
-          test "${#assets[@]}" -eq 5
-          version="${RELEASE_TAG#v}"
           test "${wheels[0]}" = "release-assets/agentrunproof-${version}-py3-none-any.whl"
           test "${sdists[0]}" = "release-assets/agentrunproof-${version}.tar.gz"
 
           (cd release-assets && sha256sum --strict --check SHA256SUMS)
-          committed_bundle="$EVIDENCE_DIRECTORY/bundle.json"
-          committed_member="$EVIDENCE_DIRECTORY/$EVIDENCE_MEMBER"
-          cmp "release-assets/$EVIDENCE_MEMBER" "$committed_member"
           cmp release-assets/bundle.json "$committed_bundle"
+          if [[ "$EVIDENCE_KIND" = upstream-comparison ]]; then
+            python - "$committed_bundle" > "$RUNNER_TEMP/comparison-certificate-members" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          bundle = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          print("\n".join(run["certificate"]["path"] for run in bundle["runs"]))
+          PY
+            while IFS= read -r member; do
+              test -n "$member"
+              cmp "release-assets/$member" "$EVIDENCE_DIRECTORY/$member"
+            done < "$RUNNER_TEMP/comparison-certificate-members"
+          else
+            committed_member="$EVIDENCE_DIRECTORY/$EVIDENCE_MEMBER"
+            cmp "release-assets/$EVIDENCE_MEMBER" "$committed_member"
+          fi
 
           source_commit="$(python - <<'PY'
           import json
@@ -138,18 +222,36 @@ jobs:
             git rev-list --parents -n 1 "$evidence_commit"
           )"
           test "${#evidence_commit_fields[@]}" -eq 2
-          test "${evidence_commit_fields[1]}" = "$source_commit"
-          test "$(git rev-list --count "$source_commit..$evidence_commit")" = 1
+          evidence_parent="${evidence_commit_fields[1]}"
+          if [[ "$EVIDENCE_KIND" = upstream-comparison ]]; then
+            git merge-base --is-ancestor "$source_commit" "$evidence_parent"
+            python - "$committed_bundle" > "$RUNNER_TEMP/expected-evidence-files" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
 
-          git diff --name-only "$source_commit..$evidence_commit" | sort \
-            > "$RUNNER_TEMP/actual-evidence-files"
-          printf '%s\n' "$committed_bundle" "$committed_member" | sort \
-            > "$RUNNER_TEMP/expected-evidence-files"
+          bundle_path = Path(sys.argv[1])
+          bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+          paths = [
+              bundle_path,
+              *(bundle_path.parent / run["certificate"]["path"] for run in bundle["runs"]),
+          ]
+          print("\n".join(sorted(str(path) for path in paths)))
+          PY
+            git diff --name-only "$evidence_parent..$evidence_commit" | sort \
+              > "$RUNNER_TEMP/actual-evidence-files"
+          else
+            test "$evidence_parent" = "$source_commit"
+            test "$(git rev-list --count "$source_commit..$evidence_commit")" = 1
+            git diff --name-only "$source_commit..$evidence_commit" | sort \
+              > "$RUNNER_TEMP/actual-evidence-files"
+            printf '%s\n' "$committed_bundle" "$committed_member" | sort \
+              > "$RUNNER_TEMP/expected-evidence-files"
+          fi
           diff -u \
             "$RUNNER_TEMP/expected-evidence-files" \
             "$RUNNER_TEMP/actual-evidence-files"
-          git diff --exit-code "$evidence_commit" HEAD -- \
-            "$committed_bundle" "$committed_member"
+          git diff --exit-code "$evidence_commit" HEAD -- "$EVIDENCE_DIRECTORY"
 
           case "$RELEASE_TAG" in
             v0.1.0)
@@ -162,6 +264,10 @@ jobs:
               test "${tagged_commit_fields[1]}" = "$evidence_commit"
               test "$(git rev-list --count "$evidence_commit..HEAD")" = 1
               printf '%s\n' CHANGELOG.md > "$RUNNER_TEMP/expected-post-evidence-files"
+              ;;
+            v0.1.2)
+              test "$(git rev-parse HEAD)" = "$evidence_commit"
+              : > "$RUNNER_TEMP/expected-post-evidence-files"
               ;;
           esac
           git diff --name-only "$evidence_commit..HEAD" | sort \
@@ -193,6 +299,7 @@ jobs:
           assert release["draft"] is False
           assert release["prerelease"] is False
           assert release["immutable"] is True
+          assert len(remote) == len(release["assets"])
           assert local.keys() == remote.keys()
           for name, path in local.items():
               data = path.read_bytes()
@@ -242,20 +349,28 @@ jobs:
             --dir final-release-assets
           release_json="$RUNNER_TEMP/release-final.json"
           gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$release_json"
-          RELEASE_JSON="$release_json" python - <<'PY'
+          RELEASE_JSON="$release_json" python - "$RUNNER_TEMP/expected-release-assets" <<'PY'
           import hashlib
           import json
           import os
+          import sys
           from pathlib import Path
 
           release = json.loads(Path(os.environ["RELEASE_JSON"]).read_text(encoding="utf-8"))
           expected = {asset["name"]: asset for asset in release["assets"]}
           actual = {path.name: path for path in Path("final-release-assets").iterdir()}
+          expected_names = set(Path(sys.argv[1]).read_text(encoding="utf-8").splitlines())
           assert release["draft"] is False
           assert release["prerelease"] is False
           assert release["immutable"] is True
-          assert len(expected) == 5
-          assert len(actual) == 2
+          assert len(expected) == len(release["assets"])
+          assert expected.keys() == expected_names
+          assert actual.keys() == {
+              name
+              for name in expected_names
+              if name.startswith("agentrunproof-")
+              and (name.endswith(".whl") or name.endswith(".tar.gz"))
+          }
           for name, path in actual.items():
               data = path.read_bytes()
               assert expected[name]["state"] == "uploaded"

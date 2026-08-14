@@ -11,6 +11,16 @@ from .bundle import (
     validate_current_certificate,
     write_current_bundle,
 )
+from .comparison import (
+    COMPARISON_SCHEMA_VERSION,
+    UpstreamComparisonError,
+    finalize_comparison_certificate,
+    finalize_upstream_comparison,
+    load_upstream_comparison,
+    parse_worker_certificate_json,
+    validate_upstream_comparison,
+    write_upstream_comparison,
+)
 
 __all__ = [
     "BUNDLE_SCHEMA_VERSION",
@@ -22,4 +32,12 @@ __all__ = [
     "validate_current_bundle",
     "validate_current_certificate",
     "write_current_bundle",
+    "COMPARISON_SCHEMA_VERSION",
+    "UpstreamComparisonError",
+    "finalize_comparison_certificate",
+    "finalize_upstream_comparison",
+    "load_upstream_comparison",
+    "parse_worker_certificate_json",
+    "validate_upstream_comparison",
+    "write_upstream_comparison",
 ]

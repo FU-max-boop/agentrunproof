@@ -10,6 +10,8 @@ def test_cli_lists_and_runs_builtin_scenario(tmp_path: Path, capsys) -> None:
     assert main(["list-scenarios"]) == 0
     listed = capsys.readouterr().out
     assert "basic-tool-session-parity" in listed
+    assert "runstate-recursive-agent-tool-approval-serialization" in listed
+    assert "runstate-recursive-agent-tool-approval-routing" in listed
     assert "runstate-sibling-approval-isolation" in listed
 
     certificate = tmp_path / "certificate.json"
@@ -49,6 +51,64 @@ def test_cli_emits_a_checkable_state_fork_certificate(tmp_path: Path, capsys) ->
     assert "state_fork_isolation" in payload["scenario"]["requested_invariants"]
     assert f"{payload['overall_status']} runstate-sibling-approval-isolation" in (
         capsys.readouterr().out
+    )
+    assert main(["check-certificate", str(certificate)]) == 0
+    assert "VALID sha256:" in capsys.readouterr().out
+
+
+def test_cli_emits_a_checkable_recursive_approval_certificate(tmp_path: Path, capsys) -> None:
+    certificate = tmp_path / "recursive-approval.json"
+    exit_code = main(
+        [
+            "probe",
+            "runstate-recursive-agent-tool-approval-routing",
+            "--certificate",
+            str(certificate),
+        ]
+    )
+    payload = json.loads(certificate.read_text(encoding="utf-8"))
+    expected_exit = 0 if payload["overall_status"] == "PASS" else 1
+
+    assert exit_code == expected_exit
+    assert payload["scenario"]["id"] == "runstate-recursive-agent-tool-approval-routing"
+    assert "recursive_approval_routing" in payload["scenario"]["requested_invariants"]
+    contracts = payload["scenario"]["phase_contracts"]["non_streaming"]
+    assert contracts[1]["save_sibling_state"] is True
+    assert contracts[2]["saved_sibling_from"] == "untouched-sibling"
+    assert f"{payload['overall_status']} runstate-recursive-agent-tool-approval-routing" in (
+        capsys.readouterr().out
+    )
+    assert main(["check-certificate", str(certificate)]) == 0
+    assert "VALID sha256:" in capsys.readouterr().out
+
+
+def test_cli_emits_a_checkable_recursive_serialization_certificate(tmp_path: Path, capsys) -> None:
+    certificate = tmp_path / "recursive-serialization.json"
+    exit_code = main(
+        [
+            "probe",
+            "runstate-recursive-agent-tool-approval-serialization",
+            "--certificate",
+            str(certificate),
+        ]
+    )
+    payload = json.loads(certificate.read_text(encoding="utf-8"))
+    expected_exit = 0 if payload["overall_status"] == "PASS" else 1
+
+    assert exit_code == expected_exit
+    assert payload["scenario"]["id"] == "runstate-recursive-agent-tool-approval-serialization"
+    contracts = payload["scenario"]["phase_contracts"]["non_streaming"]
+    assert contracts[1]["json_round_trip"] is True
+    assert contracts[1]["decisions"] == [
+        {
+            "action": "approve",
+            "call_id_sha256": ("18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"),
+            "rejection_message": None,
+        }
+    ]
+    assert (
+        f"{payload['overall_status']} "
+        "runstate-recursive-agent-tool-approval-serialization" in capsys.readouterr().out
     )
     assert main(["check-certificate", str(certificate)]) == 0
     assert "VALID sha256:" in capsys.readouterr().out
