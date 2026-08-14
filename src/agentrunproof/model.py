@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import importlib
 import json
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -79,9 +80,11 @@ class DeterministicModel(Model):
     """A narrow public-``Model`` test double used by AgentRunProof scenarios."""
 
     def __init__(self, steps: Sequence[ModelStep | Sequence[TResponseOutputItem]]) -> None:
-        self._steps = [
+        normalized_steps = [
             step if isinstance(step, ModelStep) else ModelStep(output=tuple(step)) for step in steps
         ]
+        self._sdk_model = _sdk_scripted_model(normalized_steps)
+        self._steps = normalized_steps if self._sdk_model is None else None
         self._calls: list[ModelCall] = []
 
     @property
@@ -90,13 +93,29 @@ class DeterministicModel(Model):
 
     @property
     def remaining_steps(self) -> int:
+        if self._sdk_model is not None:
+            remaining = self._sdk_model.remaining_steps
+            if not isinstance(remaining, int) or isinstance(remaining, bool) or remaining < 0:
+                raise ModelScriptError(
+                    "agents.testing.ScriptedModel returned an invalid remaining_steps value."
+                )
+            return remaining
+        if self._steps is None:
+            raise ModelScriptError("The deterministic model script backend is unavailable.")
         return len(self._steps)
 
     def assert_complete(self) -> None:
-        if self._steps:
-            raise UnconsumedModelSteps(f"{len(self._steps)} scripted model step(s) remain.")
+        remaining = self.remaining_steps
+        if remaining:
+            raise UnconsumedModelSteps(f"{remaining} scripted model step(s) remain.")
 
     def _next_step(self) -> ModelStep:
+        if self._steps is None:
+            if self.remaining_steps == 0:
+                raise UnexpectedModelCall("The runner made an unexpected model call.")
+            raise ModelScriptError(
+                "Direct step access is unavailable with agents.testing.ScriptedModel."
+            )
         if not self._steps:
             raise UnexpectedModelCall("The runner made an unexpected model call.")
         return self._steps.pop(0)
@@ -144,7 +163,6 @@ class DeterministicModel(Model):
         conversation_id: str | None,
         prompt: ResponsePromptParam | None,
     ) -> ModelResponse:
-        del tracing
         self._record_call(
             system_instructions=system_instructions,
             input=input,
@@ -157,6 +175,25 @@ class DeterministicModel(Model):
             prompt=prompt,
             streamed=False,
         )
+        if self.remaining_steps == 0:
+            raise UnexpectedModelCall("The runner made an unexpected model call.")
+        if self._sdk_model is not None:
+            return cast(
+                ModelResponse,
+                await self._sdk_model.get_response(
+                    system_instructions,
+                    input,
+                    model_settings,
+                    tools,
+                    output_schema,
+                    handoffs,
+                    tracing,
+                    previous_response_id=previous_response_id,
+                    conversation_id=conversation_id,
+                    prompt=prompt,
+                ),
+            )
+        del tracing
         step = self._next_step()
         if step.error is not None:
             raise step.error
@@ -180,7 +217,6 @@ class DeterministicModel(Model):
         conversation_id: str | None,
         prompt: ResponsePromptParam | None,
     ) -> AsyncIterator[TResponseStreamEvent]:
-        del tracing
         self._record_call(
             system_instructions=system_instructions,
             input=input,
@@ -193,13 +229,76 @@ class DeterministicModel(Model):
             prompt=prompt,
             streamed=True,
         )
+        if self.remaining_steps == 0:
+            raise UnexpectedModelCall("The runner made an unexpected model call.")
+        if self._sdk_model is not None:
+            async for event in self._sdk_model.stream_response(
+                system_instructions,
+                input,
+                model_settings,
+                tools,
+                output_schema,
+                handoffs,
+                tracing,
+                previous_response_id=previous_response_id,
+                conversation_id=conversation_id,
+                prompt=prompt,
+            ):
+                yield event
+            return
+        del tracing
         step = self._next_step()
         if step.error is not None:
             raise step.error
-        output = copy.deepcopy(list(step.output))
-        sequence_number = 0
-        for output_index, item in enumerate(output):
-            yield cast(
+        for event in _terminal_events_for_step(step):
+            yield event
+
+
+def _sdk_scripted_model(steps: Sequence[ModelStep]) -> Any | None:
+    """Use the SDK's public scripted model when that released API is available."""
+
+    try:
+        testing = importlib.import_module("agents.testing")
+    except ModuleNotFoundError as error:
+        if error.name == "agents.testing":
+            return None
+        raise ModelScriptError(
+            "The installed Agents SDK exposes agents.testing but one of its dependencies "
+            "could not be imported."
+        ) from error
+    scripted_model = getattr(testing, "ScriptedModel", None)
+    if not isinstance(scripted_model, type):
+        raise ModelScriptError(
+            "The installed Agents SDK does not expose agents.testing.ScriptedModel."
+        )
+    sdk_steps: list[Any] = []
+    for step in steps:
+        if step.error is not None:
+            sdk_steps.append(step.error)
+            continue
+        sdk_steps.append(
+            {
+                "output": copy.deepcopy(step.output),
+                "usage": copy.deepcopy(step.usage),
+                "response_id": step.response_id,
+                "stream_events": _terminal_events_for_step(step),
+            }
+        )
+    try:
+        return scripted_model(sdk_steps, emit_traces=False)
+    except (TypeError, ValueError) as error:
+        raise ModelScriptError(
+            "The installed agents.testing.ScriptedModel API is incompatible with AgentRunProof."
+        ) from error
+
+
+def _terminal_events_for_step(step: ModelStep) -> tuple[TResponseStreamEvent, ...]:
+    output = copy.deepcopy(list(step.output))
+    events: list[TResponseStreamEvent] = []
+    sequence_number = 0
+    for output_index, item in enumerate(output):
+        events.append(
+            cast(
                 TResponseStreamEvent,
                 ResponseOutputItemDoneEvent(
                     type="response.output_item.done",
@@ -208,8 +307,10 @@ class DeterministicModel(Model):
                     sequence_number=sequence_number,
                 ),
             )
-            sequence_number += 1
-        yield cast(
+        )
+        sequence_number += 1
+    events.append(
+        cast(
             TResponseStreamEvent,
             ResponseCompletedEvent(
                 type="response.completed",
@@ -217,6 +318,8 @@ class DeterministicModel(Model):
                 sequence_number=sequence_number,
             ),
         )
+    )
+    return tuple(events)
 
 
 def _function_tool_contract(tool: Tool) -> dict[str, JsonValue]:

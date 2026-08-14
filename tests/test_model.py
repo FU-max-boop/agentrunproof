@@ -50,6 +50,26 @@ async def test_deterministic_model_drives_real_runner_in_both_modes() -> None:
 
 
 @pytest.mark.asyncio
+async def test_deterministic_model_uses_sdk_scripted_model_when_available() -> None:
+    testing = pytest.importorskip(
+        "agents.testing",
+        reason="agents.testing is first available in the upcoming SDK 0.21 release",
+    )
+    model = DeterministicModel([[assistant_message("done")]])
+
+    assert isinstance(model._sdk_model, testing.ScriptedModel)
+    result = await Runner.run(
+        Agent(name="test", model=model),
+        "hello",
+        run_config=RunConfig(tracing_disabled=True),
+    )
+
+    assert result.final_output == "done"
+    assert model.calls[0].streamed is False
+    model.assert_complete()
+
+
+@pytest.mark.asyncio
 async def test_stream_uses_minimal_normalized_terminal_events() -> None:
     model = DeterministicModel([[assistant_message("done")]])
     events = [
