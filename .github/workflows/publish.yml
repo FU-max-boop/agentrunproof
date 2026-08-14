@@ -8,7 +8,7 @@ on:
       tag:
         description: Existing final GitHub Release tag to publish
         required: true
-        default: v0.1.0
+        default: v0.1.1
         type: string
       publish:
         description: Upload the verified distributions to PyPI
@@ -45,8 +45,38 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12.13"
+      - name: Select the release evidence profile
+        id: release_profile
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RELEASE_TAG" in
+            v0.1.0)
+              evidence_directory=evidence/history/v1
+              evidence_member=matrix.json
+              evidence_checker=check-history-bundle
+              ;;
+            v0.1.1)
+              evidence_directory=evidence/current/runstate-sibling-approval-isolation/v1
+              evidence_member=certificate.json
+              evidence_checker=check-current-bundle
+              ;;
+            *)
+              echo "Unsupported release evidence profile: $RELEASE_TAG" >&2
+              exit 1
+              ;;
+          esac
+          {
+            printf 'evidence-directory=%s\n' "$evidence_directory"
+            printf 'evidence-member=%s\n' "$evidence_member"
+            printf 'evidence-checker=%s\n' "$evidence_checker"
+          } >> "$GITHUB_OUTPUT"
       - name: Download and bind the final GitHub Release
         env:
+          EVIDENCE_DIRECTORY: ${{ steps.release_profile.outputs.evidence-directory }}
+          EVIDENCE_MEMBER: ${{ steps.release_profile.outputs.evidence-member }}
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
         shell: bash
@@ -65,7 +95,7 @@ jobs:
             --pattern 'agentrunproof-*.whl' \
             --pattern 'agentrunproof-*.tar.gz' \
             --pattern SHA256SUMS \
-            --pattern matrix.json \
+            --pattern "$EVIDENCE_MEMBER" \
             --pattern bundle.json \
             --dir release-assets
 
@@ -81,8 +111,10 @@ jobs:
           test "${sdists[0]}" = "release-assets/agentrunproof-${version}.tar.gz"
 
           (cd release-assets && sha256sum --strict --check SHA256SUMS)
-          cmp release-assets/matrix.json evidence/history/v1/matrix.json
-          cmp release-assets/bundle.json evidence/history/v1/bundle.json
+          committed_bundle="$EVIDENCE_DIRECTORY/bundle.json"
+          committed_member="$EVIDENCE_DIRECTORY/$EVIDENCE_MEMBER"
+          cmp "release-assets/$EVIDENCE_MEMBER" "$committed_member"
+          cmp release-assets/bundle.json "$committed_bundle"
 
           source_commit="$(python - <<'PY'
           import json
@@ -94,17 +126,49 @@ jobs:
           print(json.load(open("release-assets/bundle.json", encoding="utf-8"))["source"]["tree"])
           PY
           )"
-          read -r -a tagged_commit <<< "$(git rev-list --parents -n 1 HEAD)"
-          test "${#tagged_commit[@]}" -eq 2
-          test "${tagged_commit[1]}" = "$source_commit"
-          test "$(git rev-list --count "$source_commit..HEAD")" = 1
           test "$(git rev-parse "$source_commit^{tree}")" = "$source_tree"
-          git diff --name-only "$source_commit..HEAD" | sort > "$RUNNER_TEMP/actual-tag-files"
-          printf '%s\n' \
-            evidence/history/v1/bundle.json \
-            evidence/history/v1/matrix.json \
-            | sort > "$RUNNER_TEMP/expected-tag-files"
-          diff -u "$RUNNER_TEMP/expected-tag-files" "$RUNNER_TEMP/actual-tag-files"
+
+          mapfile -t evidence_additions < <(
+            git log --diff-filter=A --format=%H -- "$committed_bundle"
+          )
+          test "${#evidence_additions[@]}" -eq 1
+          evidence_commit="${evidence_additions[0]}"
+          git merge-base --is-ancestor "$evidence_commit" HEAD
+          read -r -a evidence_commit_fields <<< "$(
+            git rev-list --parents -n 1 "$evidence_commit"
+          )"
+          test "${#evidence_commit_fields[@]}" -eq 2
+          test "${evidence_commit_fields[1]}" = "$source_commit"
+          test "$(git rev-list --count "$source_commit..$evidence_commit")" = 1
+
+          git diff --name-only "$source_commit..$evidence_commit" | sort \
+            > "$RUNNER_TEMP/actual-evidence-files"
+          printf '%s\n' "$committed_bundle" "$committed_member" | sort \
+            > "$RUNNER_TEMP/expected-evidence-files"
+          diff -u \
+            "$RUNNER_TEMP/expected-evidence-files" \
+            "$RUNNER_TEMP/actual-evidence-files"
+          git diff --exit-code "$evidence_commit" HEAD -- \
+            "$committed_bundle" "$committed_member"
+
+          case "$RELEASE_TAG" in
+            v0.1.0)
+              test "$(git rev-parse HEAD)" = "$evidence_commit"
+              : > "$RUNNER_TEMP/expected-post-evidence-files"
+              ;;
+            v0.1.1)
+              read -r -a tagged_commit_fields <<< "$(git rev-list --parents -n 1 HEAD)"
+              test "${#tagged_commit_fields[@]}" -eq 2
+              test "${tagged_commit_fields[1]}" = "$evidence_commit"
+              test "$(git rev-list --count "$evidence_commit..HEAD")" = 1
+              printf '%s\n' CHANGELOG.md > "$RUNNER_TEMP/expected-post-evidence-files"
+              ;;
+          esac
+          git diff --name-only "$evidence_commit..HEAD" | sort \
+            > "$RUNNER_TEMP/actual-post-evidence-files"
+          diff -u \
+            "$RUNNER_TEMP/expected-post-evidence-files" \
+            "$RUNNER_TEMP/actual-post-evidence-files"
 
           mapfile -t checksum_names < <(awk 'NF == 2 {print $2}' release-assets/SHA256SUMS | sort)
           test "${#checksum_names[@]}" -eq 2
@@ -138,6 +202,8 @@ jobs:
           PY
 
       - name: Rebuild the tagged source and check the evidence bundle
+        env:
+          EVIDENCE_CHECKER: ${{ steps.release_profile.outputs.evidence-checker }}
         shell: bash
         run: |
           set -euo pipefail
@@ -160,7 +226,7 @@ jobs:
             --disable-pip-version-check "${release_wheels[0]}"
           "$RUNNER_TEMP/release-smoke/bin/python" -m pip check
           "$RUNNER_TEMP/release-smoke/bin/agentrunproof" \
-            check-history-bundle release-assets/bundle.json
+            "$EVIDENCE_CHECKER" release-assets/bundle.json
 
       - name: Redownload and stage the final immutable bytes
         env:
