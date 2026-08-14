@@ -57,7 +57,6 @@ jobs:
           test "$(git describe --tags --exact-match HEAD)" = "$RELEASE_TAG"
           test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = false
           test "$(gh release view "$RELEASE_TAG" --json isPrerelease --jq .isPrerelease)" = false
-          test "$(gh api "repos/$GITHUB_REPOSITORY/immutable-releases" --jq .enabled)" = true
           test "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
             --jq .immutable)" = true
 
@@ -163,7 +162,21 @@ jobs:
           "$RUNNER_TEMP/release-smoke/bin/agentrunproof" \
             check-history-bundle release-assets/bundle.json
 
-          RELEASE_JSON="$RUNNER_TEMP/release.json" python - <<'PY'
+      - name: Redownload and stage the final immutable bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir final-release-assets
+          gh release download "$RELEASE_TAG" \
+            --pattern 'agentrunproof-*.whl' \
+            --pattern 'agentrunproof-*.tar.gz' \
+            --dir final-release-assets
+          release_json="$RUNNER_TEMP/release-final.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$release_json"
+          RELEASE_JSON="$release_json" python - <<'PY'
           import hashlib
           import json
           import os
@@ -171,17 +184,22 @@ jobs:
 
           release = json.loads(Path(os.environ["RELEASE_JSON"]).read_text(encoding="utf-8"))
           expected = {asset["name"]: asset for asset in release["assets"]}
-          actual = {path.name: path for path in Path("release-assets").iterdir()}
-          assert actual.keys() == expected.keys()
+          actual = {path.name: path for path in Path("final-release-assets").iterdir()}
+          assert release["draft"] is False
+          assert release["prerelease"] is False
+          assert release["immutable"] is True
+          assert len(expected) == 5
+          assert len(actual) == 2
           for name, path in actual.items():
               data = path.read_bytes()
+              assert expected[name]["state"] == "uploaded"
               assert expected[name]["size"] == len(data)
               assert expected[name]["digest"] == "sha256:" + hashlib.sha256(data).hexdigest()
           PY
 
           mkdir verified-dist
-          cp "${release_wheels[0]}" "${release_sdists[0]}" verified-dist/
-          RELEASE_JSON="$RUNNER_TEMP/release.json" python - <<'PY'
+          cp final-release-assets/* verified-dist/
+          RELEASE_JSON="$release_json" python - <<'PY'
           import hashlib
           import json
           import os
