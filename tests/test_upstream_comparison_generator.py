@@ -180,9 +180,9 @@ def test_ci_can_generate_the_first_canonical_candidate_from_an_exact_target() ->
     assert 'target_commit="$INPUT_UPSTREAM_TARGET_COMMIT"' in workflow
     assert 'test "$GITHUB_REF" = refs/heads/main' in workflow
     assert '[[ "$target_commit" =~ ^[0-9a-f]{40}$ ]]' in workflow
-    assert "runstate-sibling-approval-isolation,PASS" in workflow
     assert "runstate-recursive-agent-tool-approval-routing,PASS" in workflow
     assert "runstate-recursive-agent-tool-approval-serialization,PASS" in workflow
+    assert "candidate-top-level" not in workflow
     assert "python -m agentrunproof check-upstream-bundle" in workflow
     assert 'committed_bundle="evidence/upstream-comparison/v1/bundle.json"' in workflow
     assert "find evidence/upstream " not in workflow
