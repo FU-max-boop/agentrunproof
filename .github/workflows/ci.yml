@@ -377,15 +377,28 @@ jobs:
         with:
           name: distributions
           path: build/distributions
-      - name: Bind the release wheel to the current evidence source
+      - name: Bind the release wheel when package inputs match the current evidence source
         shell: bash
         run: |
           set -euo pipefail
-          release_wheels=(build/distributions/*.whl)
-          canonical_wheels=(build/current-ci/*.whl)
-          test "${#release_wheels[@]}" -eq 1
-          test "${#canonical_wheels[@]}" -eq 1
-          cmp "${release_wheels[0]}" "${canonical_wheels[0]}"
+          source_commit="$(python - <<'PY'
+          import json
+          print(json.load(open(
+              "build/current-ci/bundle.json",
+              encoding="utf-8",
+          ))["source"]["commit"])
+          PY
+          )"
+          if git diff --quiet "$source_commit..HEAD" -- \
+            LICENSE README.md pyproject.toml src/agentrunproof; then
+            release_wheels=(build/distributions/*.whl)
+            canonical_wheels=(build/current-ci/*.whl)
+            test "${#release_wheels[@]}" -eq 1
+            test "${#canonical_wheels[@]}" -eq 1
+            cmp "${release_wheels[0]}" "${canonical_wheels[0]}"
+          else
+            echo "Package inputs differ from the immutable current-evidence source; release-wheel binding skipped."
+          fi
       - name: Upload canonical current evidence candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
