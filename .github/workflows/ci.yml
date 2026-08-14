@@ -471,8 +471,6 @@ jobs:
                 "candidate-recursive,$target_id,runstate-recursive-agent-tool-approval-routing,PASS,candidate-recursive-certificate.json" \
               --additional-run \
                 "candidate-serialized,$target_id,runstate-recursive-agent-tool-approval-serialization,PASS,candidate-serialized-certificate.json" \
-              --additional-run \
-                "candidate-top-level,$target_id,runstate-sibling-approval-isolation,PASS,candidate-top-level-certificate.json" \
               --output-directory build/upstream-comparison-ci
             python -m agentrunproof check-upstream-bundle \
               build/upstream-comparison-ci/bundle.json

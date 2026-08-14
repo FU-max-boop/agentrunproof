@@ -2,7 +2,7 @@
 
 All notable changes to AgentRunProof will be documented here.
 
-## Unreleased
+## 0.1.2 - 2026-08-14
 
 - Delegate deterministic model execution to the SDK's public `agents.testing.ScriptedModel`
   when that API is available, while preserving the 0.20-compatible fallback and normalized
