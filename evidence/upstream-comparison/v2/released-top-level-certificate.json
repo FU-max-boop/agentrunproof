@@ -1,0 +1,1708 @@
+{
+  "certificate_id": "sha256:7df90a951e669da0f8a0da30bc9875898937f0cd04fb806332e88a0b8603097e",
+  "invariants": [
+    {
+      "details": {
+        "variants": {
+          "non_streaming": {
+            "fork-check": {
+              "exception_origin": null,
+              "exception_type": null,
+              "expected": {
+                "exception_type": null,
+                "interruption_count": 1,
+                "kind": "interrupted"
+              },
+              "interruption_count": 0,
+              "status": "PASS"
+            }
+          },
+          "streaming": {
+            "fork-check": {
+              "exception_origin": null,
+              "exception_type": null,
+              "expected": {
+                "exception_type": null,
+                "interruption_count": 1,
+                "kind": "interrupted"
+              },
+              "interruption_count": 0,
+              "status": "PASS"
+            }
+          }
+        }
+      },
+      "name": "execution_outcome",
+      "reason": "UNEXPECTED_EXECUTION_OUTCOME",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "round_trips": 0,
+        "variants": 2
+      },
+      "name": "state_transitions",
+      "reason": "OK",
+      "status": "PASS"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "fork-check": {
+            "subject_state_after_sha256": "29701e5a1ee05376c86346b1d1d237b443d4ec3d5f32e2d47c96892c70d7044e",
+            "subject_state_before_sha256": "e567714821319a9e632d095dec4e3b4c1121d4587ac3a216d97c0efaea53de85"
+          }
+        },
+        "streaming": {
+          "fork-check": {
+            "subject_state_after_sha256": "29701e5a1ee05376c86346b1d1d237b443d4ec3d5f32e2d47c96892c70d7044e",
+            "subject_state_before_sha256": "e567714821319a9e632d095dec4e3b4c1121d4587ac3a216d97c0efaea53de85"
+          }
+        }
+      },
+      "name": "state_fork_isolation",
+      "reason": "SIBLING_STATE_MUTATED",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "fork-check": {
+            "tool_counts_delta": {
+              "actual": {
+                "approval_tool": 1
+              },
+              "expected": {
+                "approval_tool": 0
+              }
+            }
+          }
+        },
+        "streaming": {
+          "fork-check": {
+            "tool_counts_delta": {
+              "actual": {
+                "approval_tool": 1
+              },
+              "expected": {
+                "approval_tool": 0
+              }
+            }
+          }
+        }
+      },
+      "name": "phase_contract",
+      "reason": "PHASE_OBSERVATION_MISMATCH",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "variants": 2
+      },
+      "name": "tool_linkage",
+      "reason": "OK",
+      "status": "PASS"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "actual": {
+            "approval_tool": 1
+          },
+          "expected": {
+            "approval_tool": 0
+          }
+        },
+        "streaming": {
+          "actual": {
+            "approval_tool": 1
+          },
+          "expected": {
+            "approval_tool": 0
+          }
+        }
+      },
+      "name": "exactly_once",
+      "reason": "SIDE_EFFECT_COUNT_MISMATCH",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "compared_fields": [
+          "exception",
+          "final_output",
+          "guardrails",
+          "interruption_call_ids",
+          "interruption_count",
+          "last_agent",
+          "model_calls",
+          "phases",
+          "remaining_model_steps",
+          "session_items",
+          "status",
+          "tool_counts"
+        ]
+      },
+      "name": "stream_parity",
+      "reason": "OK",
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "This certificate is a content-addressed integrity record, not a signature.",
+    "It evaluates only the scenario variants and invariants named in this payload.",
+    "It does not evaluate model-output quality or remote service behavior.",
+    "Private summaries use correlatable, dictionary-guessable hashes; do not publish them.",
+    "Dynamic callback identities are descriptive markers only; conformance is decided from recorded observable behavior."
+  ],
+  "observations": {
+    "non_streaming": {
+      "exception": null,
+      "final_output": "unexpected sibling approval leak",
+      "guardrails": [
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        }
+      ],
+      "interruption_call_ids": [],
+      "interruption_count": 0,
+      "last_agent": "AgentRunProof RunState sibling isolation agent",
+      "model_calls": [
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Request the public synthetic approval tool.",
+              "role": "user"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Record one deterministic synthetic approved invocation.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "approval_tool",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "title": "approval_tool_args",
+                "type": "object"
+              },
+              "qualified_name": "approval_tool",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        },
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Request the public synthetic approval tool.",
+              "role": "user"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "call_id": "agentrunproof-sibling-call-1",
+              "output": "approved",
+              "type": "function_call_output"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Record one deterministic synthetic approved invocation.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "approval_tool",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "title": "approval_tool_args",
+                "type": "object"
+              },
+              "qualified_name": "approval_tool",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        }
+      ],
+      "new_items": [
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "call_id": "agentrunproof-sibling-call-1",
+          "output": "approved",
+          "type": "function_call_output"
+        },
+        {
+          "content": [
+            {
+              "annotations": [],
+              "logprobs": [],
+              "text": "unexpected sibling approval leak",
+              "type": "output_text"
+            }
+          ],
+          "id": "agentrunproof-message",
+          "role": "assistant",
+          "status": "completed",
+          "type": "message"
+        }
+      ],
+      "phases": [
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "literal",
+          "interruption_call_ids": [
+            "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof RunState sibling isolation agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Request the public synthetic approval tool.",
+                  "role": "user"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Record one deterministic synthetic approved invocation.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "approval_tool",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "required": [],
+                    "title": "approval_tool_args",
+                    "type": "object"
+                  },
+                  "qualified_name": "approval_tool",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "approval-model",
+          "new_items": [
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "initial",
+          "probes_after": {},
+          "probes_before": {},
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "literal",
+            "restored_interruption_call_ids": [],
+            "restored_state_equal": null,
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "source_interruption_call_ids": [],
+            "source_phase": null,
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [],
+          "tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [
+              []
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 1,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": "unexpected sibling approval leak",
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [],
+          "interruption_count": 0,
+          "last_agent": "AgentRunProof RunState sibling isolation agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Request the public synthetic approval tool.",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "agentrunproof-sibling-call-1",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "agentrunproof-sibling-call-1",
+                  "output": "approved",
+                  "type": "function_call_output"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Record one deterministic synthetic approved invocation.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "approval_tool",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "required": [],
+                    "title": "approval_tool_args",
+                    "type": "object"
+                  },
+                  "qualified_name": "approval_tool",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "approval-model",
+          "new_items": [
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "call_id": "agentrunproof-sibling-call-1",
+              "output": "approved",
+              "type": "function_call_output"
+            },
+            {
+              "content": [
+                {
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": "unexpected sibling approval leak",
+                  "type": "output_text"
+                }
+              ],
+              "id": "agentrunproof-message",
+              "role": "assistant",
+              "status": "completed",
+              "type": "message"
+            }
+          ],
+          "phase_id": "fork-check",
+          "probes_after": {},
+          "probes_before": {},
+          "remaining_model_steps": 0,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "restored_state_equal": null,
+            "sibling_decisions": [
+              {
+                "action": "approve",
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "matched": true
+              }
+            ],
+            "sibling_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "source_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": "29701e5a1ee05376c86346b1d1d237b443d4ec3d5f32e2d47c96892c70d7044e",
+            "subject_state_before_sha256": "e567714821319a9e632d095dec4e3b4c1121d4587ac3a216d97c0efaea53de85",
+            "subject_state_unchanged": false
+          },
+          "status": "PASS",
+          "stream_event_types": [],
+          "tool_counts_delta": {
+            "approval_tool": 1
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "call"
+              },
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "output"
+              }
+            ],
+            "model_inputs": [
+              [
+                {
+                  "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                  "kind": "call"
+                },
+                {
+                  "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                  "kind": "output"
+                }
+              ]
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 2,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "remaining_model_steps": 0,
+      "session_items": null,
+      "session_operations": [],
+      "status": "PASS",
+      "stream_event_types": [],
+      "tool_counts": {
+        "approval_tool": 1
+      },
+      "tool_linkage": {
+        "generated": [
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "output"
+          }
+        ],
+        "model_inputs": [
+          [],
+          [
+            {
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "kind": "call"
+            },
+            {
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "kind": "output"
+            }
+          ]
+        ],
+        "session": null
+      },
+      "usage": [
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 1,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 2,
+          "total_tokens": 0
+        }
+      ],
+      "variant": "non_streaming"
+    },
+    "streaming": {
+      "exception": null,
+      "final_output": "unexpected sibling approval leak",
+      "guardrails": [
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        }
+      ],
+      "interruption_call_ids": [],
+      "interruption_count": 0,
+      "last_agent": "AgentRunProof RunState sibling isolation agent",
+      "model_calls": [
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Request the public synthetic approval tool.",
+              "role": "user"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Record one deterministic synthetic approved invocation.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "approval_tool",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "title": "approval_tool_args",
+                "type": "object"
+              },
+              "qualified_name": "approval_tool",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        },
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Request the public synthetic approval tool.",
+              "role": "user"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "call_id": "agentrunproof-sibling-call-1",
+              "output": "approved",
+              "type": "function_call_output"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Record one deterministic synthetic approved invocation.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "approval_tool",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "required": [],
+                "title": "approval_tool_args",
+                "type": "object"
+              },
+              "qualified_name": "approval_tool",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        }
+      ],
+      "new_items": [
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{}",
+          "call_id": "agentrunproof-sibling-call-1",
+          "id": "agentrunproof-tool-call",
+          "name": "approval_tool",
+          "type": "function_call"
+        },
+        {
+          "call_id": "agentrunproof-sibling-call-1",
+          "output": "approved",
+          "type": "function_call_output"
+        },
+        {
+          "content": [
+            {
+              "annotations": [],
+              "logprobs": [],
+              "text": "unexpected sibling approval leak",
+              "type": "output_text"
+            }
+          ],
+          "id": "agentrunproof-message",
+          "role": "assistant",
+          "status": "completed",
+          "type": "message"
+        }
+      ],
+      "phases": [
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "literal",
+          "interruption_call_ids": [
+            "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof RunState sibling isolation agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Request the public synthetic approval tool.",
+                  "role": "user"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Record one deterministic synthetic approved invocation.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "approval_tool",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "required": [],
+                    "title": "approval_tool_args",
+                    "type": "object"
+                  },
+                  "qualified_name": "approval_tool",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "approval-model",
+          "new_items": [
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "initial",
+          "probes_after": {},
+          "probes_before": {},
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "literal",
+            "restored_interruption_call_ids": [],
+            "restored_state_equal": null,
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "source_interruption_call_ids": [],
+            "source_phase": null,
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [
+            "agent_updated_stream_event",
+            "raw_response_event",
+            "raw_response_event",
+            "run_item_stream_event"
+          ],
+          "tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [
+              []
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 1,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": "unexpected sibling approval leak",
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [],
+          "interruption_count": 0,
+          "last_agent": "AgentRunProof RunState sibling isolation agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Request the public synthetic approval tool.",
+                  "role": "user"
+                },
+                {
+                  "arguments": "{}",
+                  "call_id": "agentrunproof-sibling-call-1",
+                  "id": "agentrunproof-tool-call",
+                  "name": "approval_tool",
+                  "type": "function_call"
+                },
+                {
+                  "call_id": "agentrunproof-sibling-call-1",
+                  "output": "approved",
+                  "type": "function_call_output"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Request the synthetic approval tool, then stop for approval.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Record one deterministic synthetic approved invocation.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "approval_tool",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "required": [],
+                    "title": "approval_tool_args",
+                    "type": "object"
+                  },
+                  "qualified_name": "approval_tool",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "approval-model",
+          "new_items": [
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{}",
+              "call_id": "agentrunproof-sibling-call-1",
+              "id": "agentrunproof-tool-call",
+              "name": "approval_tool",
+              "type": "function_call"
+            },
+            {
+              "call_id": "agentrunproof-sibling-call-1",
+              "output": "approved",
+              "type": "function_call_output"
+            },
+            {
+              "content": [
+                {
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": "unexpected sibling approval leak",
+                  "type": "output_text"
+                }
+              ],
+              "id": "agentrunproof-message",
+              "role": "assistant",
+              "status": "completed",
+              "type": "message"
+            }
+          ],
+          "phase_id": "fork-check",
+          "probes_after": {},
+          "probes_before": {},
+          "remaining_model_steps": 0,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "restored_state_equal": null,
+            "sibling_decisions": [
+              {
+                "action": "approve",
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "matched": true
+              }
+            ],
+            "sibling_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "source_interruption_call_ids": [
+              "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": "29701e5a1ee05376c86346b1d1d237b443d4ec3d5f32e2d47c96892c70d7044e",
+            "subject_state_before_sha256": "e567714821319a9e632d095dec4e3b4c1121d4587ac3a216d97c0efaea53de85",
+            "subject_state_unchanged": false
+          },
+          "status": "PASS",
+          "stream_event_types": [
+            "agent_updated_stream_event",
+            "run_item_stream_event",
+            "raw_response_event",
+            "raw_response_event",
+            "run_item_stream_event"
+          ],
+          "tool_counts_delta": {
+            "approval_tool": 1
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "call"
+              },
+              {
+                "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                "kind": "output"
+              }
+            ],
+            "model_inputs": [
+              [
+                {
+                  "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                  "kind": "call"
+                },
+                {
+                  "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+                  "kind": "output"
+                }
+              ]
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 2,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "remaining_model_steps": 0,
+      "session_items": null,
+      "session_operations": [],
+      "status": "PASS",
+      "stream_event_types": [
+        "agent_updated_stream_event",
+        "raw_response_event",
+        "raw_response_event",
+        "run_item_stream_event",
+        "agent_updated_stream_event",
+        "run_item_stream_event",
+        "raw_response_event",
+        "raw_response_event",
+        "run_item_stream_event"
+      ],
+      "tool_counts": {
+        "approval_tool": 1
+      },
+      "tool_linkage": {
+        "generated": [
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+            "kind": "output"
+          }
+        ],
+        "model_inputs": [
+          [],
+          [
+            {
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "kind": "call"
+            },
+            {
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "kind": "output"
+            }
+          ]
+        ],
+        "session": null
+      },
+      "usage": [
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 1,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 2,
+          "total_tokens": 0
+        }
+      ],
+      "variant": "streaming"
+    }
+  },
+  "overall_status": "FAIL",
+  "redaction": {
+    "policy": "public-synthetic-v1",
+    "public_payloads": true
+  },
+  "runtime": {
+    "implementation": "CPython",
+    "packages": {
+      "openai": "2.54.0",
+      "openai-agents": "0.20.0",
+      "pydantic": "2.13.4"
+    },
+    "platform": {
+      "machine": "x86_64",
+      "system": "Linux"
+    },
+    "python": "3.12.13"
+  },
+  "scenario": {
+    "description": "Approving one direct RunState sibling must not mutate another sibling from the same result.",
+    "expected_outcome": {
+      "exception_type": null,
+      "interruption_count": 0,
+      "kind": "completed"
+    },
+    "expected_tool_counts": {
+      "approval_tool": 0
+    },
+    "id": "runstate-sibling-approval-isolation",
+    "normalized_input_sha256": "0b8f9575ccdd745bf809f2c969d5cdd4021191d561c83925ca557c7370e1979b",
+    "phase_contracts": {
+      "non_streaming": [
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {}
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {},
+          "expected_tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "input_kind": "literal",
+          "json_round_trip": false,
+          "model_group": "approval-model",
+          "phase_id": "initial",
+          "sibling_decisions": [],
+          "source_phase": null
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {}
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {},
+          "expected_tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "approval-model",
+          "phase_id": "fork-check",
+          "sibling_decisions": [
+            {
+              "action": "approve",
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "rejection_message": null
+            }
+          ],
+          "source_phase": "initial"
+        }
+      ],
+      "streaming": [
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {}
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {},
+          "expected_tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "input_kind": "literal",
+          "json_round_trip": false,
+          "model_group": "approval-model",
+          "phase_id": "initial",
+          "sibling_decisions": [],
+          "source_phase": null
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {}
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {},
+          "expected_tool_counts_delta": {
+            "approval_tool": 0
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "approval-model",
+          "phase_id": "fork-check",
+          "sibling_decisions": [
+            {
+              "action": "approve",
+              "call_id_sha256": "7ca8ed67e3ea51465df83f68ddd7842a04dc7e8846c314c9fbfde4c9588da1e7",
+              "rejection_message": null
+            }
+          ],
+          "source_phase": "initial"
+        }
+      ]
+    },
+    "requested_invariants": [
+      "execution_outcome",
+      "state_transitions",
+      "state_fork_isolation",
+      "phase_contract",
+      "tool_linkage",
+      "exactly_once",
+      "stream_parity"
+    ],
+    "revision": 1,
+    "variants": [
+      "non_streaming",
+      "streaming"
+    ]
+  },
+  "schema_version": "agentrunproof.certificate/v1",
+  "source": {
+    "commit": "d94443b5ef1f832ce8e3673fb29f59fb67044a89",
+    "dirty": false,
+    "index_flags_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "tracked_diff_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+    "untracked_paths_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "tool": {
+    "evaluator_revision": 1,
+    "name": "agentrunproof",
+    "normalizer_revision": 1,
+    "version": "0.2.0"
+  }
+}
