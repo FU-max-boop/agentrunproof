@@ -20,12 +20,13 @@ concurrency:
 
 jobs:
   test:
-    name: Python ${{ matrix.python-version }}
+    name: Python ${{ matrix.python-version }} / Agents ${{ matrix.sdk-version }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        sdk-version: ["0.20.0", "0.21.0"]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
@@ -44,18 +45,25 @@ jobs:
           test "${#wheel[@]}" -eq 1
           python -m pip install --disable-pip-version-check \
             "${wheel[0]}" \
+            'openai-agents==${{ matrix.sdk-version }}' \
             'jsonschema>=4.23' \
             'pytest>=8' \
             'pytest-asyncio>=0.24'
       - name: Run tests against the installed wheel
+        env:
+          EXPECTED_SDK_VERSION: ${{ matrix.sdk-version }}
         run: |
           python - <<'PY'
+          import importlib.metadata
+          import os
           from pathlib import Path
           import agentrunproof
 
           module = Path(agentrunproof.__file__).resolve()
           assert "site-packages" in module.parts, module
+          assert importlib.metadata.version("openai-agents") == os.environ["EXPECTED_SDK_VERSION"]
           PY
+          python -m pip check
           python -m pytest -q
       - name: Exercise the no-API-key built-in scenario
         run: |
@@ -432,6 +440,8 @@ jobs:
           python -m pytest -q \
             tests/test_current_comparison.py \
             tests/test_upstream_comparison_generator.py
+          python -m agentrunproof check-upstream-bundle \
+            evidence/upstream-comparison/v1/bundle.json
       - name: Reproduce committed comparison evidence when present
         id: reproduce
         shell: bash
@@ -439,7 +449,7 @@ jobs:
           INPUT_UPSTREAM_TARGET_COMMIT: ${{ inputs.upstream_target_commit }}
         run: |
           set -euo pipefail
-          committed_bundle="evidence/upstream-comparison/v1/bundle.json"
+          committed_bundle="evidence/upstream-comparison/v2/bundle.json"
           if [[ ! -f "$committed_bundle" ]]; then
             target_commit="$INPUT_UPSTREAM_TARGET_COMMIT"
             if [[ -z "$target_commit" ]]; then

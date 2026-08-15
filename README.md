@@ -2,9 +2,11 @@
 
 AgentRunProof is a deterministic runtime-conformance harness for the OpenAI Agents SDK. It drives the real `Runner` with scripted public-`Model` responses, compares observable state across execution paths, and writes a content-addressed conformance record. A failing record carries the normalized counterexample observations.
 
-AgentRunProof v0.1 targets `openai-agents` 0.20.x on Python 3.10–3.14. Built-in scenarios make no model API call and require no API key.
+AgentRunProof v0.2 declares the `openai-agents>=0.20,<0.22` compatibility window on Python
+3.10–3.14. Its packaged CI matrix verifies the exact 0.20.0 and 0.21.0 release baselines.
+Built-in scenarios make no model API call and require no API key.
 
-## What v0.1 checks
+## What AgentRunProof checks
 
 - declared completion, interruption, or Runner-exception outcomes for every scenario phase;
 - post-run parity between non-streaming execution and scripted terminal-event streaming (`response.output_item.done` plus `response.completed`);
@@ -21,7 +23,15 @@ AgentRunProof v0.1 targets `openai-agents` 0.20.x on Python 3.10–3.14. Built-i
 
 The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
 
-AgentRunProof checks SDK runtime semantics. It is not a model-quality evaluator, tracing backend, HTTP recorder, hosted service, or general agent framework.
+AgentRunProof checks SDK runtime semantics. It is not a model-quality evaluator, tracing backend,
+HTTP recorder, hosted service, or general agent framework.
+
+For observability integration tests, `DeterministicModel(..., emit_traces=True)` emits the SDK's
+ordinary generation span while the real `Runner` emits its agent and tool spans. The default is
+`False`, and `run_scenario()` still disables tracing. Built-ins remain provider-free, but arbitrary
+scenario tools and hooks are not network-sandboxed. Use the opt-in by passing the model directly
+to `Runner.run()` or `Runner.run_streamed()`; any installed trace processor may export data or make
+network requests.
 
 ## Development quickstart
 
@@ -77,9 +87,9 @@ agentrunproof check-certificate build/runstate-recursive-approval-serialization.
 The initial head of upstream PR #4414 (`9dc7da9`) fixed the live path but remained interrupted after
 JSON restoration. The revised head `1725a898` passes the built-in restored-approval scenario in both
 runner modes and was squash-merged as `50d65f65`; the upstream 24-case regression also covers
-approval and rejection before and after restoration across two and three nested edges. These commit
-observations remain development evidence until a clean comparison bundle pins that final merged
-revision.
+approval and rejection before and after restoration across two and three nested edges. The
+immutable v0.1.2 comparison bundle pins the released failure, the intermediate merged behavior,
+and the final recursive and serialized PASS results by wheel hash and Git provenance.
 
 For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The built-in scenario and the two multi-phase historical scenarios are executable examples.
 
@@ -114,9 +124,9 @@ The private profile prevents raw observed payloads from being serialized, but va
 
 ## Project contract
 
-The exact release gates and exclusions are in the [project charter](https://github.com/FU-max-boop/agentrunproof/blob/main/PROJECT_CHARTER.md). The [execution plan](https://github.com/FU-max-boop/agentrunproof/blob/main/PLAN.md) tracks the completed historical release and the current upstream counterexample.
+The exact release gates and exclusions are in the [project charter](https://github.com/FU-max-boop/agentrunproof/blob/main/PROJECT_CHARTER.md). The [execution plan](https://github.com/FU-max-boop/agentrunproof/blob/main/PLAN.md) tracks releases, evidence, and external-adoption work.
 
-AgentRunProof earned its first maintainer-level recognition when OpenAI Agents follow-up
+AgentRunProof received its first maintainer-level citation when OpenAI Agents follow-up
 [#4413](https://github.com/openai/openai-agents-python/pull/4413) cited the reported checkpoint
 isolation defect. The next adoption target is reuse of the recursive regression fixture, an
 optional CI check, or a documentation reference—not a default SDK dependency. A community-tool

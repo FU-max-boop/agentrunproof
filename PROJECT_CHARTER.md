@@ -6,7 +6,7 @@ AgentRunProof is a deterministic runtime-conformance harness for `openai-agents-
 
 The project exists to make cross-path runtime regressions cheap to reproduce and difficult to dismiss. Its primary users are Agents SDK contributors, regression-fixture authors, and application teams whose workflows depend on interruption, resume, guardrail, or streaming semantics.
 
-## v0.1.x contract
+## Runtime contract
 
 The first public contract covers the standard text `Runner` and these released public boundaries:
 
@@ -25,13 +25,22 @@ The first public contract covers the standard text `Runner` and these released p
 
 For one logical scenario, AgentRunProof may execute several variants. A variant is a real SDK run, not a simulation of the runner. The harness controls only model responses, local test tools, and the test session.
 
-The target compatibility baseline is `openai-agents` 0.20.x on Python 3.10 through 3.14. Support for a Python/SDK pair is claimed only after the packaged artifact passes that exact CI cell.
+The declared compatibility window is `openai-agents>=0.20,<0.22` on Python 3.10 through 3.14.
+The verified release baselines are exactly SDK 0.20.0 and 0.21.0; a Python/SDK cell is claimed as
+tested only after the packaged artifact passes that exact CI cell.
 
-The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.1.x claims.
+v0.2 retains certificate v1 and the v0.1 runtime scenarios. It adds an explicit
+`DeterministicModel(..., emit_traces=True)` interoperability path: SDK 0.21 delegates to the public
+`agents.testing.ScriptedModel`, while SDK 0.20 uses the existing public-`Model` fallback. The
+option emits an ordinary SDK generation span only when the caller runs the model directly through
+`Runner`; `run_scenario()` continues to disable tracing. AgentRunProof does not evaluate span
+payloads or act as a tracing backend.
+
+The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.2 runtime claims.
 
 ## Required invariants
 
-The v0.1.x engine can report these invariant families:
+The certificate-v1 engine can report these invariant families:
 
 1. **Execution outcome:** each phase declares whether it must complete, interrupt a precise number of times, or raise a qualified Runner exception; transition and observation errors never satisfy a Runner-exception contract.
 2. **Terminal-event stream parity:** equivalent scripted behavior produces equivalent post-run normalized observations in streaming and non-streaming runs, excluding event-type differences by design.
@@ -63,11 +72,11 @@ Each certificate is canonical JSON with:
 
 The certificate identifier is the SHA-256 digest of the canonical certificate payload with the identifier field omitted. A certificate is an integrity record, not a signature or proof that an untrusted publisher executed the stated commands. Public evidence must additionally be pinned by a clean Git commit and CI or release artifact.
 
-The v0.1.x private profile is designed to prevent raw payload serialization, not to provide cryptographic confidentiality. Its deterministic unsalted hashes expose equality and can be dictionary-guessed for low-entropy values; private certificates remain local unless every field has been reviewed for publication.
+The certificate-v1 private profile is designed to prevent raw payload serialization, not to provide cryptographic confidentiality. Its deterministic unsalted hashes expose equality and can be dictionary-guessed for low-entropy values; private certificates remain local unless every field has been reviewed for publication.
 
 ## Deliberate exclusions
 
-v0.1.x does not provide:
+The current runtime contract does not provide:
 
 - model-output quality evaluation or an LLM judge;
 - a tracing, observability, or hosted dashboard backend;
@@ -80,7 +89,9 @@ v0.1.x does not provide:
 - multi-framework support;
 - a claim that all constructible SDK states are supported behavior.
 
-A sanitized model-boundary cassette recorder is a candidate for v0.2. Realtime and Agents-specific MCP lifecycle adapters are later modules only after the text-runner contract has external evidence.
+A sanitized model-boundary cassette recorder remains a possible later module. Realtime and
+Agents-specific MCP lifecycle adapters remain deferred until the text-runner contract has broader
+external use.
 
 ## Adoption strategy
 
@@ -91,7 +102,7 @@ AgentRunProof earns an upstream integration by evidence rather than by requestin
 3. Obtain an external run or contributor confirmation.
 4. Propose the smallest useful upstream surface: a referenced regression fixture, an optional development/nightly conformance job, or a documentation link.
 
-Official runtime dependency status is not a v0.1 goal. A public upstream citation, accepted reproducer, test reuse, documentation reference, or maintainer acknowledgement satisfies the external-recognition gate.
+Official runtime dependency status is not a project goal. A public upstream citation, accepted reproducer, test reuse, documentation reference, or maintainer acknowledgement satisfies the external-recognition gate.
 
 That gate was first met on 2026-08-14: an OpenAI Agents maintainer acknowledged the reported
 checkpoint-isolation defect and merged PR #4413 with an explicit reference to the report. The

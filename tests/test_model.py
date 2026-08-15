@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from agents import Agent, Runner
@@ -9,6 +9,14 @@ from agents.agent_output import AgentOutputSchema
 from agents.handoffs import Handoff
 from agents.run import RunConfig
 from agents.tool import FunctionTool
+from agents.tracing import TracingProcessor, get_current_span, set_trace_processors, trace
+from agents.tracing.span_data import (
+    AgentSpanData,
+    FunctionSpanData,
+    GenerationSpanData,
+    TaskSpanData,
+    TurnSpanData,
+)
 from openai.types.responses import ResponseCompletedEvent, ResponseOutputItemDoneEvent
 from pydantic import BaseModel
 
@@ -20,6 +28,7 @@ from agentrunproof.model import (
     UnconsumedModelSteps,
     UnexpectedModelCall,
     assistant_message,
+    function_call,
 )
 from agentrunproof.scenario import RunVariant, Scenario, ScenarioCase
 
@@ -53,7 +62,7 @@ async def test_deterministic_model_drives_real_runner_in_both_modes() -> None:
 async def test_deterministic_model_uses_sdk_scripted_model_when_available() -> None:
     testing = pytest.importorskip(
         "agents.testing",
-        reason="agents.testing is first available in the upcoming SDK 0.21 release",
+        reason="agents.testing is first available in SDK 0.21",
     )
     model = DeterministicModel([[assistant_message("done")]])
 
@@ -66,6 +75,228 @@ async def test_deterministic_model_uses_sdk_scripted_model_when_available() -> N
 
     assert result.final_output == "done"
     assert model.calls[0].streamed is False
+    model.assert_complete()
+
+
+class _TraceCollector(TracingProcessor):
+    def __init__(self) -> None:
+        self.ended_spans: list[Any] = []
+
+    def on_trace_start(self, trace: Any) -> None:
+        del trace
+
+    def on_trace_end(self, trace: Any) -> None:
+        del trace
+
+    def on_span_start(self, span: Any) -> None:
+        del span
+
+    def on_span_end(self, span: Any) -> None:
+        self.ended_spans.append(span)
+
+    def shutdown(self) -> None:
+        pass
+
+    def force_flush(self) -> None:
+        pass
+
+
+@pytest.mark.parametrize("streamed", [False, True])
+@pytest.mark.parametrize("emit_traces, expected_generations", [(False, 0), (True, 2)])
+@pytest.mark.asyncio
+async def test_emit_traces_controls_generation_spans_on_real_tool_runs(
+    streamed: bool,
+    emit_traces: bool,
+    expected_generations: int,
+) -> None:
+    collector = _TraceCollector()
+    set_trace_processors([collector])
+    model = DeterministicModel(
+        [
+            [function_call("lookup", {"record_id": "public-record"}, call_id="lookup-call")],
+            [assistant_message("done")],
+        ],
+        emit_traces=emit_traces,
+    )
+    agent = Agent(name="trace agent", model=model, tools=[_function_tool()])
+    try:
+        if streamed:
+            result = Runner.run_streamed(agent, "look up the record")
+            async for _ in result.stream_events():
+                pass
+        else:
+            result = await Runner.run(agent, "look up the record")
+    finally:
+        set_trace_processors([])
+
+    assert result.final_output == "done"
+    model.assert_complete()
+    generation_spans = [
+        span for span in collector.ended_spans if isinstance(span.span_data, GenerationSpanData)
+    ]
+    assert len(generation_spans) == expected_generations
+    agent_spans = [
+        span for span in collector.ended_spans if isinstance(span.span_data, AgentSpanData)
+    ]
+    function_spans = [
+        span for span in collector.ended_spans if isinstance(span.span_data, FunctionSpanData)
+    ]
+    assert len(agent_spans) == 1
+    assert len(function_spans) == 1
+    if generation_spans:
+        trace_ids = {span.trace_id for span in collector.ended_spans}
+        assert len(trace_ids) == 1
+        task_spans = [
+            span for span in collector.ended_spans if isinstance(span.span_data, TaskSpanData)
+        ]
+        turn_spans = [
+            span for span in collector.ended_spans if isinstance(span.span_data, TurnSpanData)
+        ]
+        assert len(task_spans) == 1
+        assert len(turn_spans) == 2
+        spans_by_id = {span.span_id: span for span in collector.ended_spans}
+        agent_span_id = agent_spans[0].span_id
+        assert agent_spans[0].parent_id == task_spans[0].span_id
+        assert {span.parent_id for span in turn_spans} == {agent_span_id}
+        for span in [*generation_spans, *function_spans]:
+            parent = spans_by_id[span.parent_id]
+            assert isinstance(parent.span_data, TurnSpanData)
+
+
+@pytest.mark.asyncio
+async def test_partial_stream_close_finishes_trace_without_leaking_current_span() -> None:
+    collector = _TraceCollector()
+    set_trace_processors([collector])
+    model = DeterministicModel([[assistant_message("done")]], emit_traces=True)
+    try:
+        with trace("partial deterministic model stream"):
+            stream = model.stream_response(
+                None,
+                "input",
+                Agent(name="settings source").model_settings,
+                [],
+                None,
+                [],
+                model_tracing_disabled(),
+                previous_response_id=None,
+                conversation_id=None,
+                prompt=None,
+            )
+            try:
+                await anext(stream)
+                assert get_current_span() is None
+                await stream.aclose()
+            finally:
+                await stream.aclose()
+    finally:
+        set_trace_processors([])
+
+    assert get_current_span() is None
+    generation_spans = [
+        span for span in collector.ended_spans if isinstance(span.span_data, GenerationSpanData)
+    ]
+    assert len(generation_spans) == 1
+
+
+@pytest.mark.parametrize("streamed", [False, True])
+@pytest.mark.asyncio
+async def test_emit_traces_redacts_scripted_model_errors(streamed: bool) -> None:
+    collector = _TraceCollector()
+    set_trace_processors([collector])
+    model = DeterministicModel(
+        [ModelStep(error=RuntimeError("SECRET-MODEL-ERROR"))],
+        emit_traces=True,
+    )
+    agent = Agent(name="failing trace agent", model=model)
+    run_config = RunConfig(trace_include_sensitive_data=False)
+    try:
+        if streamed:
+            result = Runner.run_streamed(agent, "fail", run_config=run_config)
+            with pytest.raises(RuntimeError, match="SECRET-MODEL-ERROR"):
+                async for _ in result.stream_events():
+                    pass
+        else:
+            with pytest.raises(RuntimeError, match="SECRET-MODEL-ERROR"):
+                await Runner.run(agent, "fail", run_config=run_config)
+    finally:
+        set_trace_processors([])
+
+    (generation_span,) = [
+        span for span in collector.ended_spans if isinstance(span.span_data, GenerationSpanData)
+    ]
+    assert generation_span.error is not None
+    assert generation_span.error == {
+        "message": "Error",
+        "data": {
+            "name": "RuntimeError",
+            "message": "Error details are redacted.",
+        },
+    }
+
+
+@pytest.mark.parametrize("streamed", [False, True])
+@pytest.mark.asyncio
+async def test_exhausted_script_emits_an_error_generation_span(streamed: bool) -> None:
+    collector = _TraceCollector()
+    set_trace_processors([collector])
+    model = DeterministicModel([], emit_traces=True)
+    agent = Agent(name="exhausted trace agent", model=model)
+    run_config = RunConfig(trace_include_sensitive_data=False)
+    try:
+        if streamed:
+            result = Runner.run_streamed(agent, "unexpected", run_config=run_config)
+            with pytest.raises(UnexpectedModelCall):
+                async for _ in result.stream_events():
+                    pass
+        else:
+            with pytest.raises(UnexpectedModelCall):
+                await Runner.run(agent, "unexpected", run_config=run_config)
+    finally:
+        set_trace_processors([])
+
+    (generation_span,) = [
+        span for span in collector.ended_spans if isinstance(span.span_data, GenerationSpanData)
+    ]
+    assert generation_span.error is not None
+    assert generation_span.error["data"]["name"] == "UnexpectedModelCall"
+
+
+@pytest.mark.asyncio
+async def test_run_level_tracing_disabled_overrides_model_opt_in() -> None:
+    collector = _TraceCollector()
+    set_trace_processors([collector])
+    model = DeterministicModel([[assistant_message("done")]], emit_traces=True)
+    try:
+        result = await Runner.run(
+            Agent(name="trace-disabled agent", model=model),
+            "hello",
+            run_config=RunConfig(tracing_disabled=True),
+        )
+    finally:
+        set_trace_processors([])
+
+    assert result.final_output == "done"
+    assert collector.ended_spans == []
+
+
+def test_emit_traces_requires_a_boolean() -> None:
+    with pytest.raises(TypeError, match="emit_traces must be a bool"):
+        DeterministicModel([], emit_traces=1)  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_constructor_snapshots_scripted_output() -> None:
+    item = assistant_message("before")
+    model = DeterministicModel([[item]])
+    cast(Any, item).content[0].text = "after"
+
+    result = await Runner.run(
+        Agent(name="snapshot agent", model=model),
+        "hello",
+        run_config=RunConfig(tracing_disabled=True),
+    )
+
+    assert result.final_output == "before"
     model.assert_complete()
 
 
