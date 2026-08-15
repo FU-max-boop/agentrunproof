@@ -49,9 +49,10 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
 - [x] (2026-08-14) Proposed a minimal community-tool entry for AgentRunProof on the official v0.21
   testing-guide PR #4381. The maintainer declined the listing to keep that guide focused on
   SDK-maintained APIs, while explicitly welcoming future reproducible findings backed by the tool.
-- [ ] (2026-08-15) Publish v0.2.0 with packaged-wheel coverage for SDK 0.20.0 and 0.21.0, an
+- [x] (2026-08-15) Published v0.2.0 with packaged-wheel coverage for SDK 0.20.0 and 0.21.0, an
   opt-in provider-free generation span for observability integration tests, and a fresh canonical
-  comparison bundle bound to the v0.2.0 wheel.
+  comparison bundle bound to the v0.2.0 wheel. The immutable GitHub Release and PyPI artifacts
+  have matching wheel and sdist digests, and fresh installs pass against both exact SDK baselines.
 
 ## Milestones
 

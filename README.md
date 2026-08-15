@@ -89,7 +89,9 @@ JSON restoration. The revised head `1725a898` passes the built-in restored-appro
 runner modes and was squash-merged as `50d65f65`; the upstream 24-case regression also covers
 approval and rejection before and after restoration across two and three nested edges. The
 immutable v0.1.2 comparison bundle pins the released failure, the intermediate merged behavior,
-and the final recursive and serialized PASS results by wheel hash and Git provenance.
+and the final recursive and serialized PASS results by wheel hash and Git provenance. The v0.2.0
+release carries a freshly reproduced bundle for the same causal ladder, bound to the v0.2.0
+harness wheel.
 
 For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The built-in scenario and the two multi-phase historical scenarios are executable examples.
 
