@@ -10,8 +10,7 @@ import pytest
 import agentrunproof.certificate as certificate_module
 from agentrunproof._canonical import JsonValue, sha256_hex
 from agentrunproof._version import __version__
-from agentrunproof.builtins import RUNSTATE_SIBLING_APPROVAL_ISOLATION
-from agentrunproof.certificate import build_certificate, write_certificate
+from agentrunproof.certificate import write_certificate
 from agentrunproof.cli import main
 from agentrunproof.current.bundle import (
     BUNDLE_SCHEMA_VERSION,
@@ -25,11 +24,18 @@ from agentrunproof.current.bundle import (
     validate_current_certificate,
     write_current_bundle,
 )
-from agentrunproof.engine import run_scenario
 from agentrunproof.history.bundle import file_member, load_history_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 HISTORY_BUNDLE = ROOT / "evidence" / "history" / "v1" / "bundle.json"
+CURRENT_CERTIFICATE = (
+    ROOT
+    / "evidence"
+    / "current"
+    / "runstate-sibling-approval-isolation"
+    / "v1"
+    / "certificate.json"
+)
 SOURCE_COMMIT = "1" * 40
 SOURCE_TREE = "2" * 40
 
@@ -100,17 +106,10 @@ async def test_current_bundle_rejects_duplicate_manifest_keys(tmp_path: Path) ->
 
 async def _write_bundle(directory: Path) -> tuple[Path, dict[str, JsonValue]]:
     directory.mkdir(parents=True, exist_ok=True)
-    certificate = build_certificate(await run_scenario(RUNSTATE_SIBLING_APPROVAL_ISOLATION))
-    certificate["runtime"] = {
-        "python": "3.12.13",
-        "implementation": "CPython",
-        "platform": {"system": "Linux", "machine": "x86_64"},
-        "packages": {
-            "openai-agents": "0.20.0",
-            "openai": "2.54.0",
-            "pydantic": "2.13.4",
-        },
-    }
+    certificate = json.loads(CURRENT_CERTIFICATE.read_text(encoding="utf-8"))
+    tool = certificate["tool"]
+    assert isinstance(tool, dict)
+    tool["version"] = __version__
     certificate["source"] = {
         "commit": None,
         "dirty": None,
@@ -118,6 +117,7 @@ async def _write_bundle(directory: Path) -> tuple[Path, dict[str, JsonValue]]:
         "untracked_paths_sha256": None,
         "index_flags_sha256": None,
     }
+    certificate["certificate_id"] = None
     certificate["certificate_id"] = certificate_module._certificate_id(certificate)
     certificate = finalize_current_certificate(certificate, source_commit=SOURCE_COMMIT)
 

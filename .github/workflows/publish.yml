@@ -8,7 +8,7 @@ on:
       tag:
         description: Existing final GitHub Release tag to publish
         required: true
-        default: v0.1.2
+        default: v0.2.0
         type: string
       publish:
         description: Upload the verified distributions to PyPI
@@ -67,6 +67,12 @@ jobs:
               ;;
             v0.1.2)
               evidence_directory=evidence/upstream-comparison/v1
+              evidence_member=
+              evidence_checker=check-upstream-bundle
+              evidence_kind=upstream-comparison
+              ;;
+            v0.2.0)
+              evidence_directory=evidence/upstream-comparison/v2
               evidence_member=
               evidence_checker=check-upstream-bundle
               evidence_kind=upstream-comparison
@@ -265,6 +271,10 @@ jobs:
               printf '%s\n' CHANGELOG.md > "$RUNNER_TEMP/expected-post-evidence-files"
               ;;
             v0.1.2)
+              test "$(git rev-parse HEAD)" = "$evidence_commit"
+              : > "$RUNNER_TEMP/expected-post-evidence-files"
+              ;;
+            v0.2.0)
               test "$(git rev-parse HEAD)" = "$evidence_commit"
               : > "$RUNNER_TEMP/expected-post-evidence-files"
               ;;

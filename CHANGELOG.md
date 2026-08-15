@@ -2,6 +2,17 @@
 
 All notable changes to AgentRunProof will be documented here.
 
+## 0.2.0 - 2026-08-15
+
+- Verify released `openai-agents` 0.20.0 and 0.21.0 across Python 3.10–3.14 with an exact
+  packaged-wheel CI matrix.
+- Add `DeterministicModel(..., emit_traces=True)` for provider-free observability integration
+  tests. SDK 0.21 delegates to its public `agents.testing.ScriptedModel`; the 0.20 fallback emits
+  the same generation-span boundary without changing the default no-generation-span behavior.
+- Keep certificate execution tracing-disabled and preserve certificate-v1 plus all immutable v0.1
+  evidence contracts.
+- Add a fresh canonical upstream-comparison release gate whose evidence binds the v0.2.0 wheel.
+
 ## 0.1.2 - 2026-08-14
 
 - Delegate deterministic model execution to the SDK's public `agents.testing.ScriptedModel`

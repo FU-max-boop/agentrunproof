@@ -5,7 +5,7 @@ import importlib
 import json
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from agents.agent_output import AgentOutputSchemaBase
 from agents.handoffs import Handoff
@@ -18,6 +18,7 @@ from agents.items import (
 from agents.model_settings import ModelSettings
 from agents.models.interface import Model, ModelTracing
 from agents.tool import FunctionTool, Tool
+from agents.tracing import SpanError, generation_span
 from agents.usage import Usage
 from openai.types.responses import (
     Response,
@@ -79,11 +80,17 @@ class ModelStep:
 class DeterministicModel(Model):
     """A narrow public-``Model`` test double used by AgentRunProof scenarios."""
 
-    def __init__(self, steps: Sequence[ModelStep | Sequence[TResponseOutputItem]]) -> None:
-        normalized_steps = [
-            step if isinstance(step, ModelStep) else ModelStep(output=tuple(step)) for step in steps
-        ]
-        self._sdk_model = _sdk_scripted_model(normalized_steps)
+    def __init__(
+        self,
+        steps: Sequence[ModelStep | Sequence[TResponseOutputItem]],
+        *,
+        emit_traces: bool = False,
+    ) -> None:
+        if not isinstance(emit_traces, bool):
+            raise TypeError("emit_traces must be a bool.")
+        normalized_steps = [_snapshot_model_step(step) for step in steps]
+        self._emit_traces = emit_traces
+        self._sdk_model = _sdk_scripted_model(normalized_steps, emit_traces=emit_traces)
         self._steps = normalized_steps if self._sdk_model is None else None
         self._calls: list[ModelCall] = []
 
@@ -119,6 +126,12 @@ class DeterministicModel(Model):
         if not self._steps:
             raise UnexpectedModelCall("The runner made an unexpected model call.")
         return self._steps.pop(0)
+
+    def _raise_unexpected_model_call(self, tracing: ModelTracing) -> NoReturn:
+        error = UnexpectedModelCall("The runner made an unexpected model call.")
+        with generation_span(disabled=not self._emit_traces) as span:
+            _set_generation_span_error(span, error, tracing)
+            raise error
 
     def _record_call(
         self,
@@ -176,7 +189,7 @@ class DeterministicModel(Model):
             streamed=False,
         )
         if self.remaining_steps == 0:
-            raise UnexpectedModelCall("The runner made an unexpected model call.")
+            self._raise_unexpected_model_call(tracing)
         if self._sdk_model is not None:
             return cast(
                 ModelResponse,
@@ -193,15 +206,19 @@ class DeterministicModel(Model):
                     prompt=prompt,
                 ),
             )
-        del tracing
-        step = self._next_step()
-        if step.error is not None:
-            raise step.error
-        return ModelResponse(
-            output=copy.deepcopy(list(step.output)),
-            usage=copy.deepcopy(step.usage),
-            response_id=step.response_id,
-        )
+        with generation_span(disabled=not self._emit_traces) as span:
+            try:
+                step = self._next_step()
+                if step.error is not None:
+                    raise step.error
+                return ModelResponse(
+                    output=copy.deepcopy(list(step.output)),
+                    usage=copy.deepcopy(step.usage),
+                    response_id=step.response_id,
+                )
+            except Exception as error:
+                _set_generation_span_error(span, error, tracing)
+                raise
 
     async def stream_response(
         self,
@@ -230,9 +247,9 @@ class DeterministicModel(Model):
             streamed=True,
         )
         if self.remaining_steps == 0:
-            raise UnexpectedModelCall("The runner made an unexpected model call.")
+            self._raise_unexpected_model_call(tracing)
         if self._sdk_model is not None:
-            async for event in self._sdk_model.stream_response(
+            sdk_stream = self._sdk_model.stream_response(
                 system_instructions,
                 input,
                 model_settings,
@@ -243,18 +260,52 @@ class DeterministicModel(Model):
                 previous_response_id=previous_response_id,
                 conversation_id=conversation_id,
                 prompt=prompt,
-            ):
-                yield event
+            )
+            close_stream = getattr(sdk_stream, "aclose", None)
+            if not callable(close_stream):
+                raise ModelScriptError(
+                    "agents.testing.ScriptedModel returned a stream without aclose()."
+                )
+            body_error: BaseException | None = None
+            try:
+                async for event in sdk_stream:
+                    yield event
+            except BaseException as error:
+                body_error = error
+                raise
+            finally:
+                try:
+                    await close_stream()
+                except BaseException:
+                    if body_error is None:
+                        raise
             return
-        del tracing
-        step = self._next_step()
-        if step.error is not None:
-            raise step.error
-        for event in _terminal_events_for_step(step):
-            yield event
+        span = generation_span(disabled=not self._emit_traces)
+        span.start(mark_as_current=False)
+        try:
+            step = self._next_step()
+            if step.error is not None:
+                raise step.error
+            for event in _terminal_events_for_step(step):
+                yield event
+        except Exception as error:
+            _set_generation_span_error(span, error, tracing)
+            raise
+        finally:
+            span.finish(reset_current=False)
 
 
-def _sdk_scripted_model(steps: Sequence[ModelStep]) -> Any | None:
+def _snapshot_model_step(step: ModelStep | Sequence[TResponseOutputItem]) -> ModelStep:
+    source = step if isinstance(step, ModelStep) else ModelStep(output=tuple(step))
+    return ModelStep(
+        output=copy.deepcopy(source.output),
+        error=source.error,
+        usage=copy.deepcopy(source.usage),
+        response_id=source.response_id,
+    )
+
+
+def _sdk_scripted_model(steps: Sequence[ModelStep], *, emit_traces: bool) -> Any | None:
     """Use the SDK's public scripted model when that released API is available."""
 
     try:
@@ -285,7 +336,7 @@ def _sdk_scripted_model(steps: Sequence[ModelStep]) -> Any | None:
             }
         )
     try:
-        return scripted_model(sdk_steps, emit_traces=False)
+        return scripted_model(sdk_steps, emit_traces=emit_traces)
     except (TypeError, ValueError) as error:
         raise ModelScriptError(
             "The installed agents.testing.ScriptedModel API is incompatible with AgentRunProof."
@@ -320,6 +371,24 @@ def _terminal_events_for_step(step: ModelStep) -> tuple[TResponseStreamEvent, ..
         )
     )
     return tuple(events)
+
+
+def _set_generation_span_error(span: Any, error: Exception, tracing: ModelTracing) -> None:
+    """Match the released SDK scripted model's fail-closed error-span shape."""
+
+    try:
+        message = str(error) if tracing.include_data() else "Error details are redacted."
+    except BaseException:
+        message = f"Unrenderable {type(error).__name__}"
+    try:
+        span.set_error(
+            SpanError(
+                message="Error",
+                data={"name": error.__class__.__name__, "message": message},
+            )
+        )
+    except BaseException:
+        pass
 
 
 def _function_tool_contract(tool: Tool) -> dict[str, JsonValue]:

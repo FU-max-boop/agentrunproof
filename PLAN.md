@@ -33,8 +33,8 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   canonical Linux evidence jobs passed.
 - [x] (2026-08-14) Added a public-API, no-network two-edge `Agent.as_tool` approval-routing
   scenario. It records a precise FAIL on merged upstream commit `0b93ce8` and all requested
-  invariants PASS on #4414's merged correction `50d65f65`; clean public comparison evidence is
-  still pending.
+  invariants PASS on #4414's merged correction `50d65f65`; the immutable v0.1.2 comparison bundle
+  pins both boundaries.
 - [x] (2026-08-14) Reported the `RunResult.to_state()` sibling-approval isolation counterexample
   with a conventional reproducer and the immutable AgentRunProof v0.1.1 certificate. The
   maintainer acknowledged it and merged follow-up PR #4413, whose body cites the report.
@@ -49,6 +49,9 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
 - [x] (2026-08-14) Proposed a minimal community-tool entry for AgentRunProof on the official v0.21
   testing-guide PR #4381. The maintainer declined the listing to keep that guide focused on
   SDK-maintained APIs, while explicitly welcoming future reproducible findings backed by the tool.
+- [ ] (2026-08-15) Publish v0.2.0 with packaged-wheel coverage for SDK 0.20.0 and 0.21.0, an
+  opt-in provider-free generation span for observability integration tests, and a fresh canonical
+  comparison bundle bound to the v0.2.0 wheel.
 
 ## Milestones
 
@@ -85,6 +88,8 @@ The milestone is complete when the charter's Gate 4 is satisfied.
 ## Surprises & Discoveries
 
 - The public `ScriptedModel` family landed on upstream `main` after v0.20.0. The project therefore cannot make its first released contract depend exclusively on `agents.testing` until a published SDK version contains it.
+- OpenAI Agents v0.21.0 now publishes that testing API. Delegating to it gives AgentRunProof a
+  stable latest-SDK backend, while the 0.20 fallback preserves a single cross-version fixture API.
 - The released `Model` interface is unchanged between v0.19.0 and v0.20.0 at the model-call boundary relevant to the initial harness, making a narrow released-interface adapter feasible.
 - Closest existing projects either replay simplified completed trajectories, operate at HTTP transport level, or provide a heavier production replay platform. None found so far combines real Runner execution, state invariants, fail-closed redaction, and integrity-bound counterexamples.
 - A first isolated-wheel rehearsal distinguished the exact #4322 release boundary without
@@ -94,15 +99,15 @@ The milestone is complete when the charter's Gate 4 is satisfied.
 - The approval and guardrail histories require several real Runner invocations. Moving them
   through one generic multi-phase engine closed a proof gap that a standalone history worker
   would otherwise have hidden from certificate validation.
-- A paused `RunResult` on both released 0.20.0 and current `main` returns sibling `RunState`
-  objects whose approval state is aliased: approving one sibling mutates and authorizes the
-  other. JSON-restored siblings are independent, making the direct-vs-serialized mismatch a
-  narrow, falsifiable current counterexample.
+- A paused `RunResult` on released 0.20.0 and upstream commit `3e87dc8` returned sibling `RunState`
+  objects whose approval state was aliased: approving one sibling mutated and authorized the
+  other. JSON-restored siblings remained independent. Follow-up #4413 fixed that boundary in
+  commit `0b93ce8`.
 
 ## Decision Log
 
 - **2026-08-14 — Product boundary:** Build runtime state conformance, not a general agent framework, eval service, or tracing backend. This matches recurring upstream failures and leaves a defensible standalone boundary.
-- **2026-08-14 — Implementation baseline:** Target released `openai-agents` 0.20.x through the public `Model` interface. Use `agents.testing.ScriptedModel` only through an optional adapter when present.
+- **2026-08-14 — Implementation baseline:** Target released `openai-agents` 0.20.0 through the public `Model` interface. Use `agents.testing.ScriptedModel` only through an optional adapter when present.
 - **2026-08-14 — First release scope:** Standard text Runner only. Realtime, Voice, Sandbox, MCP wire conformance, and production cassette recording remain out of scope.
 - **2026-08-14 — Evidence semantics:** Certificates are content-addressed integrity records, not cryptographic attestations of execution. Public claims require a clean commit plus CI/release anchoring.
 - **2026-08-14 — Adoption target:** Seek upstream test/docs/dev-tool recognition, not a default runtime dependency.
@@ -126,7 +131,19 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   declined a community-tool listing in #4381. Pursue acceptance through precise conventional
   regressions and reproducible validation of concrete gaps, not repeated documentation or default
   dependency requests.
+- **2026-08-15 — v0.2 compatibility and interoperability:** Extend the packaged support matrix to
+  exact `openai-agents` 0.20.0 and 0.21.0 release baselines. Keep deterministic model generation
+  spans disabled by default,
+  but expose an explicit opt-in that emits the SDK's ordinary generation span so observability
+  integrations can exercise a real, provider-free `Runner`. This is an interoperability surface,
+  not a tracing evaluator or backend; certificate semantics and the provider-free built-ins remain
+  unchanged. A tested cell is claimed only after the packaged wheel runs against that exact SDK
+  release.
 
 ## Outcomes & Retrospective
 
-Not yet complete.
+The initial Gates 0–4 and external-recognition goal are complete: released evidence distinguished
+historical and current defects, and OpenAI Agents maintainers cited the findings in merged fixes.
+That is evidence-level recognition, not library adoption. The next outcome is direct reuse of
+AgentRunProof in an independent project's test or CI path, while preserving the narrow runtime
+contract.

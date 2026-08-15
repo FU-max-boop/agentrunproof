@@ -23,18 +23,17 @@ SDK regression test for the fix.
 
 ## Compatibility
 
-The current PyPI release, `agentrunproof==0.1.1`, supports
-`openai-agents>=0.20.0,<0.21` on Python 3.10 through 3.14. AgentRunProof will claim 0.21
-compatibility only after an official 0.21 package is released and the packaged artifact passes the
-corresponding CI cells. Results against prerelease or source revisions are development evidence,
-not a support claim.
+AgentRunProof `0.2.0` declares `openai-agents>=0.20.0,<0.22` on Python 3.10 through 3.14. The
+packaged wheel is tested in every Python cell against exact SDK 0.20.0 and 0.21.0 installations;
+those are the verified release baselines. Other patch, prerelease, or source revisions are not
+individually verified support cells.
 
 Install the released package in a fresh environment:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install "agentrunproof==0.1.1"
+python -m pip install "agentrunproof==0.2.0"
 mkdir -p build
 ```
 
@@ -65,10 +64,6 @@ counterexample and exits `1`. That result is a detected invariant violation, not
 
 ### 3. Recursive approval routing and JSON restoration
 
-The recursive probes are present on the repository development branch but are not part of the
-v0.1.1 PyPI artifact. To evaluate an exact source revision, check it out and install that checkout;
-record the revision with any result you publish.
-
 ```bash
 agentrunproof probe runstate-recursive-agent-tool-approval-routing \
   --certificate build/runstate-recursive-approval.json
@@ -80,6 +75,32 @@ agentrunproof probe runstate-recursive-agent-tool-approval-serialization \
 These scenarios check that one exact approval reaches the protected tool through nested
 `Agent.as_tool` checkpoints, including across `RunState.to_json()` / `RunState.from_json()`, without
 executing the effect more than once.
+
+## Provider-free tracing for integration tests
+
+SDK 0.21 supplies the public `agents.testing.ScriptedModel`; AgentRunProof delegates deterministic
+execution to it when available and preserves a public-`Model` fallback on SDK 0.20. Both paths can
+emit the SDK's normal generation span explicitly:
+
+```python
+from agents import Agent, Runner
+from agentrunproof import DeterministicModel, assistant_message
+
+model = DeterministicModel(
+    [[assistant_message("done")]],
+    emit_traces=True,
+)
+result = await Runner.run(Agent(name="instrumented test", model=model), "hello")
+assert result.final_output == "done"
+model.assert_complete()
+```
+
+This opt-in is intended for tracing and instrumentation test suites that need the real Runner but
+must not call a model provider. It is disabled by default. AgentRunProof's own `run_scenario()`
+continues to set `tracing_disabled=True`, so certificates do not capture or evaluate trace data.
+Call `Runner.run()` or `Runner.run_streamed()` directly for observability tests. An installed SDK
+trace processor can export spans or make network requests; configure the processor under test
+before enabling traces.
 
 ## Check a certificate
 
@@ -95,12 +116,12 @@ source or package revision and a visible CI or release anchor.
 
 ## Supported boundary and non-goals
 
-The v0.1 contract covers the standard text `Runner`, deterministic public-`Model` responses,
+The certificate-v1 contract covers the standard text `Runner`, deterministic public-`Model` responses,
 non-streaming and terminal-event streaming execution, selected `Session` observations, function
 tools, and selected serializable `RunState` approval/resume transitions.
 
-It does not cover model-output quality, tracing, hosted evaluation, arbitrary custom `Session`
-implementations, HTTP replay, production side-effect interception, token/delta timing,
+It does not cover model-output quality, trace-payload conformance, hosted evaluation, arbitrary
+custom `Session` implementations, HTTP replay, production side-effect interception, token/delta timing,
 backpressure, cancellation, Realtime, Voice, Sandbox, or MCP wire-protocol conformance. A
 certificate is an integrity-bound diagnostic record, not a cryptographic attestation.
 
@@ -117,7 +138,7 @@ certificate is an integrity-bound diagnostic record, not a cryptographic attesta
   [AgentRunProof validation on #4414](https://github.com/openai/openai-agents-python/pull/4414#issuecomment-5293587925)
   distinguishes its initial serialized-state failure from the revision merged as `50d65f65`.
 
-These links show that AgentRunProof evidence informed upstream diagnosis and validation. They are
+These links show that AgentRunProof evidence was cited in upstream diagnosis and validation. They are
 not a claim of official library adoption. The maintainer of the official v0.21 testing guide
 [declined a community-tool listing](https://github.com/openai/openai-agents-python/pull/4381#issuecomment-5293704972)
 to keep that page focused on SDK-maintained APIs, while explicitly welcoming future reproducible
