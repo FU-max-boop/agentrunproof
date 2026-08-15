@@ -1,0 +1,1728 @@
+{
+  "certificate_id": "sha256:0e83d2c5afe3707af8a632661b90467398f6d18e65a52f45d3473b63195744e2",
+  "invariants": [
+    {
+      "details": {
+        "variants": {
+          "non_streaming": {
+            "approved-sibling": {
+              "exception_origin": null,
+              "exception_type": null,
+              "expected": {
+                "exception_type": null,
+                "interruption_count": 0,
+                "kind": "completed"
+              },
+              "interruption_count": 1,
+              "status": "PASS"
+            }
+          },
+          "streaming": {
+            "approved-sibling": {
+              "exception_origin": null,
+              "exception_type": null,
+              "expected": {
+                "exception_type": null,
+                "interruption_count": 0,
+                "kind": "completed"
+              },
+              "interruption_count": 1,
+              "status": "PASS"
+            }
+          }
+        }
+      },
+      "name": "execution_outcome",
+      "reason": "UNEXPECTED_EXECUTION_OUTCOME",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "round_trips": 0,
+        "variants": 2
+      },
+      "name": "state_transitions",
+      "reason": "OK",
+      "status": "PASS"
+    },
+    {
+      "details": {
+        "forks": 2,
+        "variants": 2
+      },
+      "name": "state_fork_isolation",
+      "reason": "OK",
+      "status": "PASS"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "interruption_count": 1,
+          "phase_id": "approved-sibling",
+          "reason": "APPROVED_NESTED_STATE_REMAINED_INTERRUPTED",
+          "tool_counts_delta": {
+            "protected_effect": 0
+          }
+        },
+        "streaming": {
+          "interruption_count": 1,
+          "phase_id": "approved-sibling",
+          "reason": "APPROVED_NESTED_STATE_REMAINED_INTERRUPTED",
+          "tool_counts_delta": {
+            "protected_effect": 0
+          }
+        }
+      },
+      "name": "recursive_approval_routing",
+      "reason": "APPROVED_NESTED_STATE_REMAINED_INTERRUPTED",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "approved-sibling": {
+            "probes_after": {
+              "actual": {
+                "inner_model_remaining": 1,
+                "middle_model_remaining": 1,
+                "outer_model_remaining": 1,
+                "protected_effects": []
+              },
+              "expected": {
+                "inner_model_remaining": 0,
+                "middle_model_remaining": 0,
+                "outer_model_remaining": 0,
+                "protected_effects": [
+                  "committed-once"
+                ]
+              }
+            },
+            "tool_counts_delta": {
+              "actual": {
+                "protected_effect": 0
+              },
+              "expected": {
+                "protected_effect": 1
+              }
+            }
+          }
+        },
+        "streaming": {
+          "approved-sibling": {
+            "probes_after": {
+              "actual": {
+                "inner_model_remaining": 1,
+                "middle_model_remaining": 1,
+                "outer_model_remaining": 1,
+                "protected_effects": []
+              },
+              "expected": {
+                "inner_model_remaining": 0,
+                "middle_model_remaining": 0,
+                "outer_model_remaining": 0,
+                "protected_effects": [
+                  "committed-once"
+                ]
+              }
+            },
+            "tool_counts_delta": {
+              "actual": {
+                "protected_effect": 0
+              },
+              "expected": {
+                "protected_effect": 1
+              }
+            }
+          }
+        }
+      },
+      "name": "phase_contract",
+      "reason": "PHASE_OBSERVATION_MISMATCH",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "non_streaming": {
+          "actual": {
+            "protected_effect": 0
+          },
+          "expected": {
+            "protected_effect": 1
+          }
+        },
+        "streaming": {
+          "actual": {
+            "protected_effect": 0
+          },
+          "expected": {
+            "protected_effect": 1
+          }
+        }
+      },
+      "name": "exactly_once",
+      "reason": "SIDE_EFFECT_COUNT_MISMATCH",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "non_streaming:recursive-outer-model": 1,
+        "streaming:recursive-outer-model": 1
+      },
+      "name": "model_script_consumed",
+      "reason": "UNCONSUMED_MODEL_STEPS",
+      "status": "FAIL"
+    },
+    {
+      "details": {
+        "compared_fields": [
+          "exception",
+          "final_output",
+          "guardrails",
+          "interruption_call_ids",
+          "interruption_count",
+          "last_agent",
+          "model_calls",
+          "phases",
+          "remaining_model_steps",
+          "session_items",
+          "status",
+          "tool_counts"
+        ]
+      },
+      "name": "stream_parity",
+      "reason": "OK",
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "This certificate is a content-addressed integrity record, not a signature.",
+    "It evaluates only the scenario variants and invariants named in this payload.",
+    "It does not evaluate model-output quality or remote service behavior.",
+    "Private summaries use correlatable, dictionary-guessable hashes; do not publish them.",
+    "Dynamic callback identities are descriptive markers only; conformance is decided from recorded observable behavior."
+  ],
+  "observations": {
+    "non_streaming": {
+      "exception": null,
+      "final_output": null,
+      "guardrails": [
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        }
+      ],
+      "interruption_call_ids": [
+        "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+      ],
+      "interruption_count": 1,
+      "last_agent": "AgentRunProof recursive approval outer agent",
+      "model_calls": [
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Run the two-edge nested agent chain.",
+              "role": "user"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Run the middle agent tool and return its completion.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": false
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Run the middle synthetic agent.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "run_recursive_middle_agent",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "description": "Default input schema for agent-as-tool calls.",
+                "properties": {
+                  "input": {
+                    "title": "Input",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "input"
+                ],
+                "title": "AgentAsToolInput",
+                "type": "object"
+              },
+              "qualified_name": "run_recursive_middle_agent",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        }
+      ],
+      "new_items": [
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"value\":\"committed-once\"}",
+          "call_id": "agentrunproof-recursive-protected-call-1",
+          "id": "agentrunproof-recursive-protected-item-1",
+          "name": "protected_effect",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"value\":\"committed-once\"}",
+          "call_id": "agentrunproof-recursive-protected-call-1",
+          "id": "agentrunproof-recursive-protected-item-1",
+          "name": "protected_effect",
+          "type": "function_call"
+        }
+      ],
+      "phases": [
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "literal",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Run the two-edge nested agent chain.",
+                  "role": "user"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Run the middle agent tool and return its completion.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": false
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Run the middle synthetic agent.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "run_recursive_middle_agent",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "description": "Default input schema for agent-as-tool calls.",
+                    "properties": {
+                      "input": {
+                        "title": "Input",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "input"
+                    ],
+                    "title": "AgentAsToolInput",
+                    "type": "object"
+                  },
+                  "qualified_name": "run_recursive_middle_agent",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "initial",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 2,
+            "middle_model_remaining": 2,
+            "outer_model_remaining": 2,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "literal",
+            "restored_interruption_call_ids": [],
+            "restored_state_equal": null,
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "source_interruption_call_ids": [],
+            "source_phase": null,
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [
+              []
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{\"value\":\"committed-once\"}",
+              "call_id": "agentrunproof-recursive-protected-call-1",
+              "id": "agentrunproof-recursive-protected-item-1",
+              "name": "protected_effect",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "untouched-sibling",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "restored_state_equal": null,
+            "saved_sibling_from": null,
+            "saved_sibling_state_sha256": "33c2e7786fcce7177cd232a91af05684ca4aa194c89e24b190bdc5a6ae6e7e78",
+            "sibling_decisions": [
+              {
+                "action": "approve",
+                "call_id_sha256": "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec",
+                "matched": true
+              }
+            ],
+            "sibling_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "sibling_state_saved": true,
+            "source_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": "89640a49d3bc08c2703efd8209721294e912c8b30f08e4a72ddd6db7cff7dfc0",
+            "subject_state_before_sha256": "89640a49d3bc08c2703efd8209721294e912c8b30f08e4a72ddd6db7cff7dfc0",
+            "subject_state_unchanged": true
+          },
+          "status": "PASS",
+          "stream_event_types": [],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{\"value\":\"committed-once\"}",
+              "call_id": "agentrunproof-recursive-protected-call-1",
+              "id": "agentrunproof-recursive-protected-item-1",
+              "name": "protected_effect",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "approved-sibling",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "restored_state_equal": null,
+            "saved_sibling_from": "untouched-sibling",
+            "saved_sibling_state_sha256": "33c2e7786fcce7177cd232a91af05684ca4aa194c89e24b190bdc5a6ae6e7e78",
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "sibling_state_saved": false,
+            "source_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "remaining_model_steps": 1,
+      "session_items": null,
+      "session_operations": [],
+      "status": "PASS",
+      "stream_event_types": [],
+      "tool_counts": {
+        "protected_effect": 0
+      },
+      "tool_linkage": {
+        "generated": [
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          }
+        ],
+        "model_inputs": [
+          []
+        ],
+        "session": null
+      },
+      "usage": [
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        }
+      ],
+      "variant": "non_streaming"
+    },
+    "streaming": {
+      "exception": null,
+      "final_output": null,
+      "guardrails": [
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        },
+        {
+          "input_guardrail_results": [],
+          "output_guardrail_results": [],
+          "tool_input_guardrail_results": [],
+          "tool_output_guardrail_results": []
+        }
+      ],
+      "interruption_call_ids": [
+        "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+      ],
+      "interruption_count": 1,
+      "last_agent": "AgentRunProof recursive approval outer agent",
+      "model_calls": [
+        {
+          "conversation_id": null,
+          "handoffs": [],
+          "input": [
+            {
+              "content": "Run the two-edge nested agent chain.",
+              "role": "user"
+            }
+          ],
+          "model_settings": {
+            "context_management": null,
+            "extra_args": null,
+            "extra_body": null,
+            "extra_headers": null,
+            "extra_query": null,
+            "frequency_penalty": null,
+            "include_usage": null,
+            "max_tokens": null,
+            "metadata": null,
+            "parallel_tool_calls": null,
+            "presence_penalty": null,
+            "preserve_raw_usage": null,
+            "prompt_cache_options": null,
+            "prompt_cache_retention": null,
+            "reasoning": null,
+            "response_include": null,
+            "retry": null,
+            "store": null,
+            "temperature": null,
+            "tool_choice": null,
+            "top_logprobs": null,
+            "top_p": null,
+            "truncation": null,
+            "verbosity": null
+          },
+          "output_schema": null,
+          "previous_response_id": null,
+          "prompt": null,
+          "system_instructions": "Run the middle agent tool and return its completion.",
+          "tools": [
+            {
+              "allowed_callers": null,
+              "approval_policy": {
+                "kind": "static",
+                "value": false
+              },
+              "custom_data_extractor": "none",
+              "defer_loading": false,
+              "description": "Run the middle synthetic agent.",
+              "enabled_policy": {
+                "kind": "static",
+                "value": true
+              },
+              "kind": "function",
+              "name": "run_recursive_middle_agent",
+              "output_json_schema": null,
+              "params_json_schema": {
+                "additionalProperties": false,
+                "description": "Default input schema for agent-as-tool calls.",
+                "properties": {
+                  "input": {
+                    "title": "Input",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "input"
+                ],
+                "title": "AgentAsToolInput",
+                "type": "object"
+              },
+              "qualified_name": "run_recursive_middle_agent",
+              "strict_json_schema": true,
+              "timeout_behavior": "error_as_result",
+              "timeout_error_function": "none",
+              "timeout_seconds": null,
+              "tool_input_guardrails": [],
+              "tool_output_guardrails": []
+            }
+          ]
+        }
+      ],
+      "new_items": [
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"value\":\"committed-once\"}",
+          "call_id": "agentrunproof-recursive-protected-call-1",
+          "id": "agentrunproof-recursive-protected-item-1",
+          "name": "protected_effect",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"input\":\"run the middle agent\"}",
+          "call_id": "agentrunproof-recursive-middle-edge-call-1",
+          "id": "agentrunproof-recursive-middle-edge-item-1",
+          "name": "run_recursive_middle_agent",
+          "type": "function_call"
+        },
+        {
+          "arguments": "{\"value\":\"committed-once\"}",
+          "call_id": "agentrunproof-recursive-protected-call-1",
+          "id": "agentrunproof-recursive-protected-item-1",
+          "name": "protected_effect",
+          "type": "function_call"
+        }
+      ],
+      "phases": [
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "literal",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [
+            {
+              "conversation_id": null,
+              "handoffs": [],
+              "input": [
+                {
+                  "content": "Run the two-edge nested agent chain.",
+                  "role": "user"
+                }
+              ],
+              "model_settings": {
+                "context_management": null,
+                "extra_args": null,
+                "extra_body": null,
+                "extra_headers": null,
+                "extra_query": null,
+                "frequency_penalty": null,
+                "include_usage": null,
+                "max_tokens": null,
+                "metadata": null,
+                "parallel_tool_calls": null,
+                "presence_penalty": null,
+                "preserve_raw_usage": null,
+                "prompt_cache_options": null,
+                "prompt_cache_retention": null,
+                "reasoning": null,
+                "response_include": null,
+                "retry": null,
+                "store": null,
+                "temperature": null,
+                "tool_choice": null,
+                "top_logprobs": null,
+                "top_p": null,
+                "truncation": null,
+                "verbosity": null
+              },
+              "output_schema": null,
+              "previous_response_id": null,
+              "prompt": null,
+              "system_instructions": "Run the middle agent tool and return its completion.",
+              "tools": [
+                {
+                  "allowed_callers": null,
+                  "approval_policy": {
+                    "kind": "static",
+                    "value": false
+                  },
+                  "custom_data_extractor": "none",
+                  "defer_loading": false,
+                  "description": "Run the middle synthetic agent.",
+                  "enabled_policy": {
+                    "kind": "static",
+                    "value": true
+                  },
+                  "kind": "function",
+                  "name": "run_recursive_middle_agent",
+                  "output_json_schema": null,
+                  "params_json_schema": {
+                    "additionalProperties": false,
+                    "description": "Default input schema for agent-as-tool calls.",
+                    "properties": {
+                      "input": {
+                        "title": "Input",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "input"
+                    ],
+                    "title": "AgentAsToolInput",
+                    "type": "object"
+                  },
+                  "qualified_name": "run_recursive_middle_agent",
+                  "strict_json_schema": true,
+                  "timeout_behavior": "error_as_result",
+                  "timeout_error_function": "none",
+                  "timeout_seconds": null,
+                  "tool_input_guardrails": [],
+                  "tool_output_guardrails": []
+                }
+              ]
+            }
+          ],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "initial",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 2,
+            "middle_model_remaining": 2,
+            "outer_model_remaining": 2,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "literal",
+            "restored_interruption_call_ids": [],
+            "restored_state_equal": null,
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "source_interruption_call_ids": [],
+            "source_phase": null,
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [
+            "agent_updated_stream_event",
+            "raw_response_event",
+            "raw_response_event",
+            "run_item_stream_event"
+          ],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [
+              []
+            ],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{\"value\":\"committed-once\"}",
+              "call_id": "agentrunproof-recursive-protected-call-1",
+              "id": "agentrunproof-recursive-protected-item-1",
+              "name": "protected_effect",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "untouched-sibling",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "restored_state_equal": null,
+            "saved_sibling_from": null,
+            "saved_sibling_state_sha256": "33c2e7786fcce7177cd232a91af05684ca4aa194c89e24b190bdc5a6ae6e7e78",
+            "sibling_decisions": [
+              {
+                "action": "approve",
+                "call_id_sha256": "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec",
+                "matched": true
+              }
+            ],
+            "sibling_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "sibling_state_saved": true,
+            "source_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": "89640a49d3bc08c2703efd8209721294e912c8b30f08e4a72ddd6db7cff7dfc0",
+            "subject_state_before_sha256": "89640a49d3bc08c2703efd8209721294e912c8b30f08e4a72ddd6db7cff7dfc0",
+            "subject_state_unchanged": true
+          },
+          "status": "PASS",
+          "stream_event_types": [
+            "agent_updated_stream_event"
+          ],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        },
+        {
+          "exception": null,
+          "final_output": null,
+          "guardrails": {
+            "input_guardrail_results": [],
+            "output_guardrail_results": [],
+            "tool_input_guardrail_results": [],
+            "tool_output_guardrail_results": []
+          },
+          "input_kind": "resume",
+          "interruption_call_ids": [
+            "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+          ],
+          "interruption_count": 1,
+          "last_agent": "AgentRunProof recursive approval outer agent",
+          "model_calls": [],
+          "model_group": "recursive-outer-model",
+          "new_items": [
+            {
+              "arguments": "{\"input\":\"run the middle agent\"}",
+              "call_id": "agentrunproof-recursive-middle-edge-call-1",
+              "id": "agentrunproof-recursive-middle-edge-item-1",
+              "name": "run_recursive_middle_agent",
+              "type": "function_call"
+            },
+            {
+              "arguments": "{\"value\":\"committed-once\"}",
+              "call_id": "agentrunproof-recursive-protected-call-1",
+              "id": "agentrunproof-recursive-protected-item-1",
+              "name": "protected_effect",
+              "type": "function_call"
+            }
+          ],
+          "phase_id": "approved-sibling",
+          "probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "probes_before": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "remaining_model_steps": 1,
+          "session_items_after": null,
+          "session_items_before": null,
+          "session_operations": [],
+          "state_transition": {
+            "decisions": [],
+            "json_round_trip_equal": null,
+            "json_round_trip_requested": false,
+            "kind": "resume",
+            "restored_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "restored_state_equal": null,
+            "saved_sibling_from": "untouched-sibling",
+            "saved_sibling_state_sha256": "33c2e7786fcce7177cd232a91af05684ca4aa194c89e24b190bdc5a6ae6e7e78",
+            "sibling_decisions": [],
+            "sibling_interruption_call_ids": [],
+            "sibling_state_saved": false,
+            "source_interruption_call_ids": [
+              "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec"
+            ],
+            "source_phase": "initial",
+            "state_schema_version": null,
+            "subject_state_after_sha256": null,
+            "subject_state_before_sha256": null,
+            "subject_state_unchanged": null
+          },
+          "status": "PASS",
+          "stream_event_types": [
+            "agent_updated_stream_event"
+          ],
+          "tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "tool_linkage": {
+            "generated": [
+              {
+                "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+                "kind": "call"
+              }
+            ],
+            "model_inputs": [],
+            "session_after": null,
+            "session_before": null
+          },
+          "usage": {
+            "input_tokens": 0,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 0,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "request_usage_entries": [],
+            "requests": 3,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "remaining_model_steps": 1,
+      "session_items": null,
+      "session_operations": [],
+      "status": "PASS",
+      "stream_event_types": [
+        "agent_updated_stream_event",
+        "raw_response_event",
+        "raw_response_event",
+        "run_item_stream_event",
+        "agent_updated_stream_event",
+        "agent_updated_stream_event"
+      ],
+      "tool_counts": {
+        "protected_effect": 0
+      },
+      "tool_linkage": {
+        "generated": [
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          },
+          {
+            "call_id_sha256": "837be471b5ac72d9ce5d17908b0973b2cae116c82a2e76885f958d3ba6ae6760",
+            "kind": "call"
+          }
+        ],
+        "model_inputs": [
+          []
+        ],
+        "session": null
+      },
+      "usage": [
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        },
+        {
+          "input_tokens": 0,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "request_usage_entries": [],
+          "requests": 3,
+          "total_tokens": 0
+        }
+      ],
+      "variant": "streaming"
+    }
+  },
+  "overall_status": "FAIL",
+  "redaction": {
+    "policy": "public-synthetic-v1",
+    "public_payloads": true
+  },
+  "runtime": {
+    "implementation": "CPython",
+    "packages": {
+      "openai": "3.0.0",
+      "openai-agents": "0.20.0",
+      "pydantic": "2.12.3"
+    },
+    "platform": {
+      "machine": "x86_64",
+      "system": "Linux"
+    },
+    "python": "3.12.13"
+  },
+  "scenario": {
+    "description": "One flattened approval must route through two Agent.as_tool checkpoints while a direct sibling state remains pending.",
+    "expected_outcome": {
+      "exception_type": null,
+      "interruption_count": 0,
+      "kind": "completed"
+    },
+    "expected_tool_counts": {
+      "protected_effect": 1
+    },
+    "id": "runstate-recursive-agent-tool-approval-routing",
+    "normalized_input_sha256": "cf966df60330300f8ecd6a6ae959d47d4712e5b14adf4afb709afe4e19e63aba",
+    "phase_contracts": {
+      "non_streaming": [
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "input_kind": "literal",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "initial",
+          "sibling_decisions": [],
+          "source_phase": null
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "untouched-sibling",
+          "save_sibling_state": true,
+          "sibling_decisions": [
+            {
+              "action": "approve",
+              "call_id_sha256": "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec",
+              "rejection_message": null
+            }
+          ],
+          "source_phase": "initial"
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 0,
+            "kind": "completed"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 0,
+            "middle_model_remaining": 0,
+            "outer_model_remaining": 0,
+            "protected_effects": [
+              "committed-once"
+            ]
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 1
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "approved-sibling",
+          "saved_sibling_from": "untouched-sibling",
+          "sibling_decisions": [],
+          "source_phase": "initial"
+        }
+      ],
+      "streaming": [
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "input_kind": "literal",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "initial",
+          "sibling_decisions": [],
+          "source_phase": null
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 1,
+            "kind": "interrupted"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 1,
+            "middle_model_remaining": 1,
+            "outer_model_remaining": 1,
+            "protected_effects": []
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 0
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "untouched-sibling",
+          "save_sibling_state": true,
+          "sibling_decisions": [
+            {
+              "action": "approve",
+              "call_id_sha256": "18a3037806c47a97bbcc4dda440b96c9213b8ff2114345156c2bde1e44f226ec",
+              "rejection_message": null
+            }
+          ],
+          "source_phase": "initial"
+        },
+        {
+          "callback_markers": {
+            "before": null,
+            "probes": {
+              "inner_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_inner_remaining",
+              "middle_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_middle_remaining",
+              "outer_model_remaining": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_outer_remaining",
+              "protected_effects": "agentrunproof.builtins._runstate_recursive_agent_tool_approval_routing_case.<locals>.capture_effects"
+            }
+          },
+          "decisions": [],
+          "expected_outcome": {
+            "exception_type": null,
+            "interruption_count": 0,
+            "kind": "completed"
+          },
+          "expected_probes_after": {
+            "inner_model_remaining": 0,
+            "middle_model_remaining": 0,
+            "outer_model_remaining": 0,
+            "protected_effects": [
+              "committed-once"
+            ]
+          },
+          "expected_tool_counts_delta": {
+            "protected_effect": 1
+          },
+          "input_kind": "resume",
+          "json_round_trip": false,
+          "model_group": "recursive-outer-model",
+          "phase_id": "approved-sibling",
+          "saved_sibling_from": "untouched-sibling",
+          "sibling_decisions": [],
+          "source_phase": "initial"
+        }
+      ]
+    },
+    "requested_invariants": [
+      "execution_outcome",
+      "state_transitions",
+      "state_fork_isolation",
+      "recursive_approval_routing",
+      "phase_contract",
+      "exactly_once",
+      "model_script_consumed",
+      "stream_parity"
+    ],
+    "revision": 1,
+    "variants": [
+      "non_streaming",
+      "streaming"
+    ]
+  },
+  "schema_version": "agentrunproof.certificate/v1",
+  "source": {
+    "commit": "d94443b5ef1f832ce8e3673fb29f59fb67044a89",
+    "dirty": false,
+    "index_flags_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "tracked_diff_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+    "untracked_paths_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "tool": {
+    "evaluator_revision": 1,
+    "name": "agentrunproof",
+    "normalizer_revision": 1,
+    "version": "0.2.0"
+  }
+}
