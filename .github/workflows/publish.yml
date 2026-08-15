@@ -105,7 +105,6 @@ jobs:
           test -f "$committed_bundle"
           if [[ "$EVIDENCE_KIND" = upstream-comparison ]]; then
             test -z "$EVIDENCE_MEMBER"
-            PYTHONPATH=src python -m agentrunproof check-upstream-bundle "$committed_bundle"
           else
             test "$EVIDENCE_KIND" = single-member
             test -n "$EVIDENCE_MEMBER"

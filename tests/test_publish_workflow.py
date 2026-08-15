@@ -41,3 +41,17 @@ def test_v012_evidence_commit_is_minimal_and_is_the_tag_target() -> None:
     assert 'git diff --exit-code "$evidence_commit" HEAD -- "$EVIDENCE_DIRECTORY"' in workflow
     assert 'test "$(git rev-parse HEAD)" = "$evidence_commit"' in v012_policy
     assert 'bundle_path.parent / run["certificate"]["path"]' in workflow
+
+
+def test_bundle_checker_runs_from_the_installed_release_wheel() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    download_step = workflow.split("      - name: Download and bind the final GitHub Release\n", 1)[
+        1
+    ].split("      - name: Rebuild the tagged source and check the evidence bundle\n", 1)[0]
+    rebuild_step = workflow.split(
+        "      - name: Rebuild the tagged source and check the evidence bundle\n", 1
+    )[1].split("      - name: Redownload and stage the final immutable bytes\n", 1)[0]
+
+    assert "PYTHONPATH=src python -m agentrunproof" not in download_step
+    assert '"$RUNNER_TEMP/release-smoke/bin/agentrunproof"' in rebuild_step
+    assert '"$EVIDENCE_CHECKER" release-assets/bundle.json' in rebuild_step
