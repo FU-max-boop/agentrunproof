@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling==1.26.3"]
+requires = ["hatchling==1.32.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -59,7 +59,7 @@ dev = [
   "build>=1.2",
   "mypy>=1.15",
   "ruff>=0.12",
-  "twine>=6",
+  "twine>=7",
 ]
 
 [tool.hatch.build.targets.wheel]
