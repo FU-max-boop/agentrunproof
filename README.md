@@ -55,6 +55,19 @@ unverifiable evidence. See the
 and the
 [OpenAI Agents integration guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/openai-agents.md).
 
+Maintaining a downstream library? The
+[isolated, test-only CI guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/ci-adoption.md)
+provides a copyable real-`Runner` contract test and an ephemeral `uv` matrix for exact SDK 0.20.0
+and 0.21.0. It keeps AgentRunProof out of runtime metadata and the project lockfile. Provider-free
+means the built-in deterministic model sends no model-provider request; it does not make arbitrary
+downstream code or dependency installation network-isolated.
+
+For artifact review, pin `agentrunproof==0.2.0` and use the immutable
+[v0.2.0 release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.2.0), whose
+`SHA256SUMS` binds the wheel and sdist. The release workflow rebuilds and byte-compares those
+artifacts, smoke-tests the wheel, and publishes the same verified files to PyPI through OIDC trusted
+publishing. The CI guide records the exact hashes and the remaining third-party-code trust boundary.
+
 ## Where it fits
 
 Use the SDK's public `agents.testing.ScriptedModel` with `pytest` for a focused deterministic
