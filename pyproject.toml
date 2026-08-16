@@ -5,11 +5,18 @@ build-backend = "hatchling.build"
 [project]
 name = "agentrunproof"
 dynamic = ["version"]
-description = "Deterministic runtime conformance for the OpenAI Agents SDK"
+description = "Provider-free Runner regression probes for the OpenAI Agents SDK"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Fu Xiaonan" }]
+keywords = [
+  "agent-testing",
+  "conformance-testing",
+  "openai-agents",
+  "regression-testing",
+  "runstate",
+]
 dependencies = [
   "openai-agents>=0.20.0,<0.22",
 ]
@@ -26,6 +33,7 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Testing",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
 ]
 
 [project.urls]
@@ -35,6 +43,8 @@ Issues = "https://github.com/FU-max-boop/agentrunproof/issues"
 Changelog = "https://github.com/FU-max-boop/agentrunproof/blob/main/CHANGELOG.md"
 Documentation = "https://github.com/FU-max-boop/agentrunproof/blob/main/docs/openai-agents.md"
 Evidence = "https://github.com/FU-max-boop/agentrunproof/tree/main/evidence"
+CaseStudy = "https://github.com/FU-max-boop/agentrunproof/blob/main/docs/case-study-runstate.md"
+Community = "https://github.com/FU-max-boop/agentrunproof/discussions"
 
 [project.scripts]
 agentrunproof = "agentrunproof.cli:main"
@@ -58,9 +68,12 @@ packages = ["src/agentrunproof"]
 [tool.hatch.build.targets.sdist]
 include = [
   "/CHANGELOG.md",
-  "/docs/openai-agents.md",
+  "/CONTRIBUTING.md",
+  "/docs/**",
+  "/examples/**",
   "/LICENSE",
   "/README.md",
+  "/SECURITY.md",
   "/pyproject.toml",
   "/requirements/history/**",
   "/requirements/upstream/**",
@@ -74,6 +87,7 @@ exclude = [
   "/.gitignore",
   "/build/**",
   "/dist/**",
+  "/docs/assets/social-preview.png",
   "/evidence/**",
 ]
 
@@ -83,7 +97,7 @@ path = "src/agentrunproof/_version.py"
 [tool.pytest.ini_options]
 addopts = "-ra"
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["tests", "examples"]
 
 [tool.ruff]
 line-length = 100

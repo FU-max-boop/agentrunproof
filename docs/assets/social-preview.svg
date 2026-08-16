@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
+  <title id="title">AgentRunProof</title>
+  <desc id="description">Deterministic runtime proofs for the OpenAI Agents SDK</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="0.55" stop-color="#0d1b2d"/>
+      <stop offset="1" stop-color="#102c31"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#86efac"/>
+    </linearGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="#a7f3d0" stroke-opacity="0.045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000" flood-opacity="0.36"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#background)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <circle cx="1110" cy="70" r="250" fill="#2dd4bf" opacity="0.06"/>
+  <circle cx="90" cy="610" r="300" fill="#34d399" opacity="0.05"/>
+
+  <g font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <text x="80" y="100" fill="url(#accent)" font-size="24" font-weight="700" letter-spacing="3">AGENTRUNPROOF</text>
+    <text x="80" y="166" fill="#f8fafc" font-size="48" font-weight="760">Runtime bugs deserve proofs,</text>
+    <text x="80" y="220" fill="#f8fafc" font-size="48" font-weight="760">not screenshots.</text>
+    <text x="82" y="264" fill="#a8b7c9" font-size="21">Real Runner · scripted public Model · content-addressed certificate</text>
+
+    <g filter="url(#shadow)">
+      <rect x="78" y="304" width="1124" height="244" rx="18" fill="#050b14" stroke="#334155"/>
+      <rect x="78" y="304" width="1124" height="42" rx="18" fill="#111c2c"/>
+      <rect x="78" y="328" width="1124" height="18" fill="#111c2c"/>
+      <circle cx="105" cy="325" r="6" fill="#fb7185"/>
+      <circle cx="127" cy="325" r="6" fill="#fbbf24"/>
+      <circle cx="149" cy="325" r="6" fill="#4ade80"/>
+
+      <text x="110" y="390" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">$</text>
+      <text x="132" y="390" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">agentrunproof probe basic-tool-session-parity --certificate proof.json</text>
+      <text x="110" y="426" fill="#86efac" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="700">PASS</text>
+      <text x="168" y="426" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">execution · stream parity · tool linkage · exactly once</text>
+      <text x="110" y="462" fill="#5eead4" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">certificate_id:</text>
+      <text x="270" y="462" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">sha256:6be76236…66fe259</text>
+      <text x="110" y="500" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">$</text>
+      <text x="132" y="500" fill="#dbeafe" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">agentrunproof check-certificate proof.json</text>
+      <text x="742" y="500" fill="#86efac" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="700">VALID PASS</text>
+    </g>
+
+    <g transform="translate(80 584)">
+      <rect width="151" height="32" rx="16" fill="#15313a" stroke="#2dd4bf" stroke-opacity="0.45"/>
+      <text x="75.5" y="22" text-anchor="middle" fill="#99f6e4" font-size="15" font-weight="650">NO API KEY</text>
+      <rect x="166" width="178" height="32" rx="16" fill="#15313a" stroke="#2dd4bf" stroke-opacity="0.45"/>
+      <text x="255" y="22" text-anchor="middle" fill="#99f6e4" font-size="15" font-weight="650">REAL SDK RUNNER</text>
+      <rect x="359" width="216" height="32" rx="16" fill="#15313a" stroke="#2dd4bf" stroke-opacity="0.45"/>
+      <text x="467" y="22" text-anchor="middle" fill="#99f6e4" font-size="15" font-weight="650">STREAM + RUNSTATE</text>
+      <text x="1200" y="22" text-anchor="end" fill="#8091a7" font-size="15">community tool · MIT</text>
+    </g>
+  </g>
+</svg>

@@ -1,10 +1,74 @@
 # AgentRunProof
 
-AgentRunProof is a deterministic runtime-conformance harness for the OpenAI Agents SDK. It drives the real `Runner` with scripted public-`Model` responses, compares observable state across execution paths, and writes a content-addressed conformance record. A failing record carries the normalized counterexample observations.
+[![CI](https://github.com/FU-max-boop/agentrunproof/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/FU-max-boop/agentrunproof/actions/workflows/ci.yml?query=branch%3Amain)
+[![PyPI](https://img.shields.io/pypi/v/agentrunproof.svg)](https://pypi.org/project/agentrunproof/)
+[![Python](https://img.shields.io/pypi/pyversions/agentrunproof.svg)](https://pypi.org/project/agentrunproof/)
+[![License: MIT](https://img.shields.io/github/license/FU-max-boop/agentrunproof.svg)](https://github.com/FU-max-boop/agentrunproof/blob/main/LICENSE)
+
+![AgentRunProof: runtime bugs deserve proofs, not screenshots](https://raw.githubusercontent.com/FU-max-boop/agentrunproof/main/docs/assets/social-preview.png)
+
+**Catch OpenAI Agents SDK `Runner` regressions without an API key.**
+
+AgentRunProof runs deterministic scenarios against the real `Runner`, compares observable behavior
+across `run` and `run_streamed`, and writes content-addressed JSON records for stream, session,
+tool-linkage, and `RunState` resume invariants. A failing record carries the normalized
+counterexample observations.
 
 AgentRunProof v0.2 declares the `openai-agents>=0.20,<0.22` compatibility window on Python
 3.10–3.14. Its packaged CI matrix verifies the exact 0.20.0 and 0.21.0 release baselines.
 Built-in scenarios make no model API call and require no API key.
+
+> AgentRunProof-backed reports are referenced by two merged maintainer fixes,
+> [#4413](https://github.com/openai/openai-agents-python/pull/4413) and
+> [#4414](https://github.com/openai/openai-agents-python/pull/4414). This is upstream diagnostic
+> impact—not OpenAI adoption, dependency, or endorsement.
+
+Read the five-minute
+[RunState case study](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/case-study-runstate.md)
+for the released failure, the recursive follow-up, and the exact before/after evidence chain.
+
+## 30-second local check
+
+```bash
+python -m pip install "agentrunproof==0.2.0"
+agentrunproof probe basic-tool-session-parity --certificate proof.json
+agentrunproof check-certificate proof.json
+```
+
+Expected output:
+
+```text
+PASS basic-tool-session-parity
+  PASS    execution_outcome: OK
+  PASS    stream_parity: OK
+  PASS    tool_linkage: OK
+  PASS    exactly_once: OK
+  PASS    model_script_consumed: OK
+certificate_id: sha256:...
+written: proof.json
+VALID sha256:... PASS
+```
+
+Exit `0` means PASS, `1` means an observed invariant violation, and `2` means invalid or
+unverifiable evidence. See the
+[provider-free real Runner example](https://github.com/FU-max-boop/agentrunproof/blob/main/examples/provider_free_tool_demo.py)
+and the
+[OpenAI Agents integration guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/openai-agents.md).
+
+## Where it fits
+
+Use the SDK's public `agents.testing.ScriptedModel` with `pytest` for a focused deterministic
+application or SDK test. AgentRunProof delegates to `ScriptedModel` on SDK 0.21 and adds reusable
+scenario orchestration, automatic `run`/`run_streamed` comparison, multi-phase `RunState` checks,
+cross-version evidence, and content-addressed records.
+
+| You need to… | Start with |
+| --- | --- |
+| Script model responses and assert one application behavior | `agents.testing.ScriptedModel` + `pytest` |
+| Compare the same contract across runner modes or SDK versions | AgentRunProof |
+| Check approval/rejection and JSON-restored `RunState` flows | AgentRunProof |
+| Share a normalized record that can be checked without a provider call | AgentRunProof |
+| Evaluate model-output quality | An eval framework, not AgentRunProof |
 
 ## What AgentRunProof checks
 
@@ -133,6 +197,18 @@ AgentRunProof received its first maintainer-level citation when OpenAI Agents fo
 isolation defect. The next adoption target is reuse of the recursive regression fixture, an
 optional CI check, or a documentation reference—not a default SDK dependency. A community-tool
 entry was [proposed on the official v0.21 testing-guide PR](https://github.com/openai/openai-agents-python/pull/4381#issuecomment-5293600461). The maintainer [kept that guide limited to SDK-maintained APIs](https://github.com/openai/openai-agents-python/pull/4381#issuecomment-5293704972) while explicitly welcoming future reproducible findings backed by the tool. AgentRunProof therefore remains an external project rather than an official SDK listing or dependency.
+
+## Contribute a runtime contract
+
+Found a public-API `Runner` inconsistency?
+[Open a scenario request](https://github.com/FU-max-boop/agentrunproof/issues/new/choose) with the
+exact SDK version and a minimal reproducer. Want to make it permanent? See the
+[contribution guide](https://github.com/FU-max-boop/agentrunproof/blob/main/CONTRIBUTING.md) and add
+the smallest failing scenario. For usage questions and early contract ideas, use
+[Discussions](https://github.com/FU-max-boop/agentrunproof/discussions).
+
+If AgentRunProof belongs in your regression toolbox, star the repository so other SDK maintainers
+can find it.
 
 ## License
 

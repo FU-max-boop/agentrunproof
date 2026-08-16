@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible AgentRunProof defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AgentRunProof. Never paste API keys, credentials, private traces, or unreviewed production certificates.
+  - type: input
+    id: agentrunproof-version
+    attributes:
+      label: AgentRunProof version
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: input
+    id: sdk-version
+    attributes:
+      label: OpenAI Agents SDK version or source commit
+      description: Use N/A when the defect is limited to installation, CLI parsing, or local certificate checking.
+      placeholder: openai-agents 0.21.0, source commit abc123, or N/A
+  - type: input
+    id: python-version
+    attributes:
+      label: Python and operating system
+      placeholder: Python 3.12.6 on Ubuntu 24.04 x86_64
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the exact command or smallest public-API script.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+      description: Include exit status and the relevant invariant/reason, with secrets removed.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private payloads, and unreviewed production data.
+          required: true
+        - label: I searched existing issues for the same behavior.
+          required: true

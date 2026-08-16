@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and design discussions
+    url: https://github.com/FU-max-boop/agentrunproof/discussions
+    about: Ask how to use AgentRunProof or discuss a runtime contract before proposing it.
+  - name: OpenAI Agents SDK bug
+    url: https://github.com/openai/openai-agents-python/issues
+    about: Report SDK behavior directly upstream when it does not depend on AgentRunProof.
