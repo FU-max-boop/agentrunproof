@@ -2,6 +2,14 @@
 
 All notable changes to AgentRunProof will be documented here.
 
+## Unreleased
+
+- Add a provider-free real-`Runner` tool example, contribution and security guidance, structured
+  issue and pull-request templates, and a five-minute upstream `RunState` case study.
+- Rework the project landing page around a 30-second PyPI check, supported SDK boundaries, honest
+  upstream impact, and a clear comparison with the SDK's public `ScriptedModel`.
+- Improve package discovery metadata and add a reusable social-preview asset.
+
 ## 0.2.0 - 2026-08-15
 
 - Verify released `openai-agents` 0.20.0 and 0.21.0 across Python 3.10–3.14 with an exact

@@ -1,0 +1,52 @@
+name: Scenario proposal
+description: Propose a deterministic runtime contract or regression scenario
+title: "[Scenario]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: contract
+    attributes:
+      label: Runtime contract
+      description: What public SDK behavior should remain true?
+    validations:
+      required: true
+  - type: textarea
+    id: counterexample
+    attributes:
+      label: Minimal counterexample
+      description: Describe the smallest public-API run that violates or distinguishes the contract.
+    validations:
+      required: true
+  - type: textarea
+    id: observations
+    attributes:
+      label: Required observations and invariants
+      description: List only observations that can be recorded deterministically without provider calls.
+    validations:
+      required: true
+  - type: input
+    id: boundary
+    attributes:
+      label: Version or commit boundary
+      placeholder: 0.20.0 FAIL -> commit abc123 PASS
+    validations:
+      required: true
+  - type: textarea
+    id: ordinary-test
+    attributes:
+      label: Why a normal application test is not enough
+      description: Explain the cross-version, cross-path, or evidence requirement.
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Scenario constraints
+      options:
+        - label: The proposed built-in makes no model-provider request and needs no API key.
+          required: true
+        - label: The proposal does not contain a benchmark answer, hidden test, credential, or private payload.
+          required: true
+        - label: I searched existing scenarios and issues for duplicates.
+          required: true
