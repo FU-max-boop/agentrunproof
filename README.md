@@ -26,6 +26,10 @@ Built-in scenarios make no model API call and require no API key.
 Read the five-minute
 [RunState case study](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/case-study-runstate.md)
 for the released failure, the recursive follow-up, and the exact before/after evidence chain.
+For complete usage details, start with the
+[documentation index](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/README.md),
+[Python API reference](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/api-reference.md),
+or [CLI reference](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/cli-reference.md).
 
 ## 30-second local check
 
