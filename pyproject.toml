@@ -53,7 +53,7 @@ agentrunproof = "agentrunproof.cli:main"
 test = [
   "jsonschema>=4.23",
   "pytest>=8",
-  "pytest-asyncio>=0.24",
+  "pytest-asyncio>=1.4.0",
 ]
 dev = [
   "build>=1.2",
