@@ -2,15 +2,15 @@
 
 All notable changes to AgentRunProof will be documented here.
 
-## 0.3.0 - Unreleased
+## 0.3.0 - 2026-08-21
 
 - Extend the declared dependency window to `openai-agents>=0.20.0,<0.23` and add exact 0.22.0
   packaged-wheel coverage to the Python 3.10–3.14 CI matrix alongside 0.20.0 and 0.21.0.
 - Treat SDK 0.22's output-guardrail replacement semantically: preserve call/output linkage and
   require the rejected raw tool result to be absent without pinning the SDK's replacement text;
   use scenario/case revision 2 while older history keeps revision 1.
-- Preserve certificate v1 plus all existing historical evidence and lock files. Publication of
-  v0.3.0 remains blocked on a fresh clean-commit comparison bundle and complete release gates.
+- Preserve certificate v1 plus all existing historical evidence and lock files, and require a
+  fresh v3 comparison bundle bound to the 0.3.0 source and release wheel.
 - Add a provider-free real-`Runner` tool example, contribution and security guidance, structured
   issue and pull-request templates, and a five-minute upstream `RunState` case study.
 - Rework the project landing page around a 30-second PyPI check, supported SDK boundaries, honest

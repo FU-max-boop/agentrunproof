@@ -25,10 +25,9 @@ The first public contract covers the standard text `Runner` and these released p
 
 For one logical scenario, AgentRunProof may execute several variants. A variant is a real SDK run, not a simulation of the runner. The harness controls only model responses, local test tools, and the test session.
 
-The v0.3 release candidate declares the compatibility window `openai-agents>=0.20,<0.23` on
-Python 3.10 through 3.14. Its acceptance matrix installs the packaged artifact against exactly SDK
-0.20.0, 0.21.0, and 0.22.0; a Python/SDK cell is claimed as tested only after that exact CI cell
-passes. The latest published release remains v0.2.0 until the v0.3 release gates complete.
+The v0.3 source contract declares the compatibility window `openai-agents>=0.20,<0.23` on Python 3.10
+through 3.14. Its acceptance matrix installs the packaged artifact against exactly SDK 0.20.0,
+0.21.0, and 0.22.0; a Python/SDK cell is claimed as tested only after that exact CI cell passes.
 
 v0.3 retains certificate v1, the v0.1 runtime scenarios, and v0.2's explicit
 `DeterministicModel(..., emit_traces=True)` interoperability path: supported SDKs 0.21 and 0.22

@@ -184,12 +184,13 @@ def test_ci_can_generate_the_first_canonical_candidate_from_an_exact_target() ->
     assert "runstate-recursive-agent-tool-approval-serialization,PASS" in workflow
     assert "candidate-top-level" not in workflow
     assert "python -m agentrunproof check-upstream-bundle" in workflow
-    assert 'committed_bundle="evidence/upstream-comparison/v2/bundle.json"' in workflow
+    assert 'committed_bundle="evidence/upstream-comparison/v3/bundle.json"' in workflow
     assert "evidence/upstream-comparison/v1/bundle.json" in workflow
+    assert "evidence/upstream-comparison/v2/bundle.json" in workflow
     assert "find evidence/upstream " not in workflow
-    assert 'git merge-base --is-ancestor "$source_commit" "$evidence_parent"' in workflow
+    assert 'git merge-base --is-ancestor "$source_commit" "$evidence_parent"' not in workflow
     assert 'git diff --name-only "$evidence_parent..$evidence_commit"' in workflow
-    assert 'test "${evidence_parent_fields[1]}" = "$source_commit"' not in workflow
+    assert 'test "$evidence_parent" = "$source_commit"' in workflow
 
 
 def test_replaceable_source_target_binds_clean_git_provenance(tmp_path: Path) -> None:

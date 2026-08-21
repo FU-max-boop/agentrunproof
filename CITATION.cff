@@ -5,8 +5,7 @@ type: software
 authors:
   - family-names: Fu
     given-names: Xiaonan
-version: 0.2.0
-date-released: 2026-08-15
+version: 0.3.0
 repository-code: "https://github.com/FU-max-boop/agentrunproof"
 url: "https://github.com/FU-max-boop/agentrunproof"
 license: MIT

@@ -442,6 +442,8 @@ jobs:
             tests/test_upstream_comparison_generator.py
           python -m agentrunproof check-upstream-bundle \
             evidence/upstream-comparison/v1/bundle.json
+          python -m agentrunproof check-upstream-bundle \
+            evidence/upstream-comparison/v2/bundle.json
       - name: Reproduce committed comparison evidence when present
         id: reproduce
         shell: bash
@@ -449,7 +451,7 @@ jobs:
           INPUT_UPSTREAM_TARGET_COMMIT: ${{ inputs.upstream_target_commit }}
         run: |
           set -euo pipefail
-          committed_bundle="evidence/upstream-comparison/v2/bundle.json"
+          committed_bundle="evidence/upstream-comparison/v3/bundle.json"
           if [[ ! -f "$committed_bundle" ]]; then
             target_commit="$INPUT_UPSTREAM_TARGET_COMMIT"
             if [[ -z "$target_commit" ]]; then
@@ -528,7 +530,7 @@ jobs:
           )"
           test "${#evidence_parent_fields[@]}" -eq 2
           evidence_parent="${evidence_parent_fields[1]}"
-          git merge-base --is-ancestor "$source_commit" "$evidence_parent"
+          test "$evidence_parent" = "$source_commit"
           test "$(git rev-parse "$source_commit^{tree}")" = "$source_tree"
 
           python - "$committed_bundle" > "$RUNNER_TEMP/expected-upstream-evidence-files" <<'PY'
