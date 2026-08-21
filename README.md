@@ -14,9 +14,11 @@ across `run` and `run_streamed`, and writes content-addressed JSON records for s
 tool-linkage, and `RunState` resume invariants. A failing record carries the normalized
 counterexample observations.
 
-AgentRunProof v0.2 declares the `openai-agents>=0.20,<0.22` compatibility window on Python
-3.10–3.14. Its packaged CI matrix verifies the exact 0.20.0 and 0.21.0 release baselines.
-Built-in scenarios make no model API call and require no API key.
+The v0.3.0 release candidate in this source tree declares
+`openai-agents>=0.20,<0.23` on Python 3.10–3.14. Its packaged-wheel CI matrix requires the exact
+0.20.0, 0.21.0, and 0.22.0 release baselines. The latest published package remains v0.2.0, whose
+declared window ends before SDK 0.22. Built-in scenarios make no model API call and require no API
+key.
 
 > AgentRunProof-backed reports are referenced by two merged maintainer fixes,
 > [#4413](https://github.com/openai/openai-agents-python/pull/4413) and
@@ -62,9 +64,10 @@ and the
 Maintaining a downstream library? The
 [isolated, test-only CI guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/ci-adoption.md)
 provides a copyable real-`Runner` contract test and an ephemeral `uv` matrix for exact SDK 0.20.0
-and 0.21.0. It keeps AgentRunProof out of runtime metadata and the project lockfile. Provider-free
-means the built-in deterministic model sends no model-provider request; it does not make arbitrary
-downstream code or dependency installation network-isolated.
+and 0.21.0 using the published v0.2.0 package, plus the pending v0.3.0 expansion to SDK 0.22.0. It
+keeps AgentRunProof out of runtime metadata and the project lockfile. Provider-free means the
+built-in deterministic model sends no model-provider request; it does not make arbitrary downstream
+code or dependency installation network-isolated.
 
 For artifact review, pin `agentrunproof==0.2.0` and use the immutable
 [v0.2.0 release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.2.0), whose
@@ -75,9 +78,9 @@ publishing. The CI guide records the exact hashes and the remaining third-party-
 ## Where it fits
 
 Use the SDK's public `agents.testing.ScriptedModel` with `pytest` for a focused deterministic
-application or SDK test. AgentRunProof delegates to `ScriptedModel` on SDK 0.21 and adds reusable
-scenario orchestration, automatic `run`/`run_streamed` comparison, multi-phase `RunState` checks,
-cross-version evidence, and content-addressed records.
+application or SDK test. AgentRunProof delegates to `ScriptedModel` on supported SDKs 0.21 and
+0.22 and adds reusable scenario orchestration, automatic `run`/`run_streamed` comparison,
+multi-phase `RunState` checks, cross-version evidence, and content-addressed records.
 
 | You need to… | Start with |
 | --- | --- |
@@ -101,6 +104,8 @@ cross-version evidence, and content-addressed records.
 - recursive approval routing after a public `RunState.to_json()` / `RunState.from_json()` boundary,
   with one exact approval applied to the restored interruption;
 - per-phase tool-count deltas, scenario probes, and replay of persisted tool history.
+- output-guardrail tool-pair durability, including SDK 0.22's removal of a rejected raw tool result
+  from durable replay without depending on its replacement wording.
 
 The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
 

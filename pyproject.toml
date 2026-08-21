@@ -18,7 +18,7 @@ keywords = [
   "runstate",
 ]
 dependencies = [
-  "openai-agents>=0.20.0,<0.22",
+  "openai-agents>=0.20.0,<0.23",
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",

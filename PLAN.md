@@ -53,6 +53,11 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   opt-in provider-free generation span for observability integration tests, and a fresh canonical
   comparison bundle bound to the v0.2.0 wheel. The immutable GitHub Release and PyPI artifacts
   have matching wheel and sdist digests, and fresh installs pass against both exact SDK baselines.
+- [x] (2026-08-21) Prepared the v0.3.0 source release candidate for SDK 0.22: widened metadata to
+  `<0.23`, added the exact 0.22.0 packaged-wheel cells, and made the output-guardrail history check
+  require linked redacted replay without matching replacement prose. One built wheel passed the
+  full suite locally on CPython 3.12 against exact SDK 0.20.0, 0.21.0, and 0.22.0. The full
+  Python 3.10–3.14 CI matrix and a fresh release-bound v3 evidence bundle remain publication gates.
 
 ## Milestones
 
@@ -104,6 +109,9 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   objects whose approval state was aliased: approving one sibling mutated and authorized the
   other. JSON-restored siblings remained independent. Follow-up #4413 fixed that boundary in
   commit `0b93ce8`.
+- OpenAI Agents 0.22 intentionally replaces a tool result rejected by a terminal output guardrail
+  before saving and replaying the session. The call/output pair and follow-up execution remain
+  intact, so compatibility depends on redaction semantics rather than the SDK's replacement text.
 
 ## Decision Log
 
@@ -140,6 +148,16 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   not a tracing evaluator or backend; certificate semantics and the provider-free built-ins remain
   unchanged. A tested cell is claimed only after the packaged wheel runs against that exact SDK
   release.
+- **2026-08-21 — v0.3 SDK 0.22 compatibility:** Extend the declared window to
+  `openai-agents>=0.20,<0.23` and require packaged-wheel CI against the exact 0.20.0, 0.21.0, and
+  0.22.0 releases. SDK 0.22 intentionally redacts a terminal tool result rejected by an output
+  guardrail before durable session replay. The guardrail-history contract will therefore preserve
+  call/output linkage while checking that the rejected raw result is absent; it must not depend on
+  the SDK's human-readable replacement text. The redacted 0.22 family uses scenario/case revision
+  2, while 0.19–0.21 retain revision 1 and their existing raw-output fingerprints. Existing
+  signed-off evidence and historical lock files remain immutable. A v0.3 release remains blocked
+  until fresh clean-commit evidence and all release gates exist; documentation and workflow
+  preparation must not imply that 0.3.0 has been published.
 
 ## Outcomes & Retrospective
 
