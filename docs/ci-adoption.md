@@ -39,10 +39,9 @@ uv run --isolated --no-project --python 3.12 \
   -- python -m pytest -q examples/ci_adoption/test_runner_contract.py
 ```
 
-These commands intentionally remain on the published v0.2.0 contract. The 0.3.0 source candidate
-adds exact SDK 0.22.0 coverage, but `agentrunproof==0.3.0` must not be used in a downstream PyPI job
-until that release exists and publishes verified artifact hashes. From this repository checkout,
-the candidate can be tested without changing project metadata:
+The 0.3.0 source contract adds exact SDK 0.22.0 coverage. Pin `agentrunproof==0.3.0` downstream
+only after its immutable release and PyPI pages exist. Before then, the source contract can be
+tested without changing project metadata:
 
 ```bash
 uv run --isolated --no-project --python 3.12 \
@@ -62,7 +61,7 @@ the adapter, name the applicable extra, for example `--with-editable ".[openai]"
 
 This job is deliberately separate from the downstream project's normal dependency installation.
 It grants read-only repository permission, pins the action and tool revisions, and tests the two
-exact SDK releases covered by AgentRunProof 0.2.0.
+exact SDK releases covered by the published AgentRunProof 0.2.0 contract.
 
 ```yaml
 name: OpenAI Agents Runner contract
@@ -85,10 +84,10 @@ jobs:
       matrix:
         sdk-version: ["0.20.0", "0.21.0"]
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12.13"
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
@@ -126,17 +125,17 @@ the test intentionally covers an integration boundary.
 
 ## Dependency and release trust
 
-- Pin `agentrunproof==0.2.0` and an exact `openai-agents` release in the isolated job. The supported
+- Pin `agentrunproof==0.2.0` and an exact `openai-agents` release in the isolated job. Its supported
   range is `openai-agents>=0.20.0,<0.22`; 0.20.0 and 0.21.0 are the exact packaged CI baselines.
-- The 0.3.0 source candidate expands that declaration to `openai-agents>=0.20.0,<0.23` and adds an
+- The 0.3.0 source contract expands that declaration to `openai-agents>=0.20.0,<0.23` and adds an
   exact 0.22.0 packaged-wheel cell on every supported Python. Switch downstream pins and matrices
-  only after the final release, checksums, and release-bound evidence are public.
+  after the final release, checksums, and release-bound evidence are public.
 - The immutable [v0.2.0 GitHub release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.2.0)
   publishes wheel and sdist SHA-256 values in `SHA256SUMS`. Its release workflow re-downloads those
   assets, compares them byte-for-byte with a rebuild from the tagged source, and smoke-tests the
   wheel before the same verified files are sent to PyPI through OIDC trusted publishing.
-- The released wheel SHA-256 is
-  `e393e98bf797cc10f07ea151ec6fffd3b1ebbb21307256309e08f11e97a27d51`; the sdist SHA-256 is
+- The v0.2.0 wheel SHA-256 is
+  `e393e98bf797cc10f07ea151ec6fffd3b1ebbb21307256309e08f11e97a27d51`; its sdist SHA-256 is
   `c0ad9c2aeb425cfcaff81b6daeee9c9ded069397dfc7a3319fda28f9842f2ace`.
 - A repository with a lock or hash policy should resolve this isolated closure with its normal
   dependency-review process and commit the resulting test-only lock data. The short `uv run`

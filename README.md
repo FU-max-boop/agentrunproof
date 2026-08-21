@@ -14,11 +14,10 @@ across `run` and `run_streamed`, and writes content-addressed JSON records for s
 tool-linkage, and `RunState` resume invariants. A failing record carries the normalized
 counterexample observations.
 
-The v0.3.0 release candidate in this source tree declares
-`openai-agents>=0.20,<0.23` on Python 3.10–3.14. Its packaged-wheel CI matrix requires the exact
-0.20.0, 0.21.0, and 0.22.0 release baselines. The latest published package remains v0.2.0, whose
-declared window ends before SDK 0.22. Built-in scenarios make no model API call and require no API
-key.
+The 0.3.0 source contract declares `openai-agents>=0.20,<0.23` on Python 3.10–3.14. Its
+packaged-wheel CI matrix requires the exact 0.20.0, 0.21.0, and 0.22.0 release baselines. Published
+availability is shown by the PyPI badge and immutable GitHub Releases. Built-in scenarios make no
+model API call and require no API key.
 
 > AgentRunProof-backed reports are referenced by two merged maintainer fixes,
 > [#4413](https://github.com/openai/openai-agents-python/pull/4413) and
@@ -36,7 +35,7 @@ or [CLI reference](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/c
 ## 30-second local check
 
 ```bash
-python -m pip install "agentrunproof==0.2.0"
+python -m pip install agentrunproof
 agentrunproof probe basic-tool-session-parity --certificate proof.json
 agentrunproof check-certificate proof.json
 ```
@@ -63,17 +62,16 @@ and the
 
 Maintaining a downstream library? The
 [isolated, test-only CI guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/ci-adoption.md)
-provides a copyable real-`Runner` contract test and an ephemeral `uv` matrix for exact SDK 0.20.0
-and 0.21.0 using the published v0.2.0 package, plus the pending v0.3.0 expansion to SDK 0.22.0. It
-keeps AgentRunProof out of runtime metadata and the project lockfile. Provider-free means the
-built-in deterministic model sends no model-provider request; it does not make arbitrary downstream
-code or dependency installation network-isolated.
+provides a copyable real-`Runner` contract test and an ephemeral `uv` matrix. Its published v0.2.0
+example covers exact SDK 0.20.0 and 0.21.0; the 0.3.0 source contract adds SDK 0.22.0 and may be
+pinned downstream only after its immutable release and PyPI pages exist. The isolated pattern keeps
+AgentRunProof out of runtime metadata and the project lockfile.
 
-For artifact review, pin `agentrunproof==0.2.0` and use the immutable
-[v0.2.0 release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.2.0), whose
+For artifact review, pin an exact published version and use its matching
+[immutable GitHub Release](https://github.com/FU-max-boop/agentrunproof/releases). Each
 `SHA256SUMS` binds the wheel and sdist. The release workflow rebuilds and byte-compares those
 artifacts, smoke-tests the wheel, and publishes the same verified files to PyPI through OIDC trusted
-publishing. The CI guide records the exact hashes and the remaining third-party-code trust boundary.
+publishing. The CI guide explains the remaining third-party-code trust boundary.
 
 ## Where it fits
 
