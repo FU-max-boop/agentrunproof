@@ -93,7 +93,7 @@ dependencies are ordinary Python code and are not network-sandboxed.
 ### Version, errors, and enum values
 
 ```text
-__version__: str = "0.2.0"
+__version__: str = "0.3.0"
 
 class CertificateError(ValueError)
 

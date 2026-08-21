@@ -25,18 +25,25 @@ The first public contract covers the standard text `Runner` and these released p
 
 For one logical scenario, AgentRunProof may execute several variants. A variant is a real SDK run, not a simulation of the runner. The harness controls only model responses, local test tools, and the test session.
 
-The declared compatibility window is `openai-agents>=0.20,<0.22` on Python 3.10 through 3.14.
-The verified release baselines are exactly SDK 0.20.0 and 0.21.0; a Python/SDK cell is claimed as
-tested only after the packaged artifact passes that exact CI cell.
+The v0.3 release candidate declares the compatibility window `openai-agents>=0.20,<0.23` on
+Python 3.10 through 3.14. Its acceptance matrix installs the packaged artifact against exactly SDK
+0.20.0, 0.21.0, and 0.22.0; a Python/SDK cell is claimed as tested only after that exact CI cell
+passes. The latest published release remains v0.2.0 until the v0.3 release gates complete.
 
-v0.2 retains certificate v1 and the v0.1 runtime scenarios. It adds an explicit
-`DeterministicModel(..., emit_traces=True)` interoperability path: SDK 0.21 delegates to the public
-`agents.testing.ScriptedModel`, while SDK 0.20 uses the existing public-`Model` fallback. The
-option emits an ordinary SDK generation span only when the caller runs the model directly through
-`Runner`; `run_scenario()` continues to disable tracing. AgentRunProof does not evaluate span
-payloads or act as a tracing backend.
+v0.3 retains certificate v1, the v0.1 runtime scenarios, and v0.2's explicit
+`DeterministicModel(..., emit_traces=True)` interoperability path: supported SDKs 0.21 and 0.22
+delegate to the public `agents.testing.ScriptedModel`, while SDK 0.20 uses the existing
+public-`Model` fallback. The option emits an ordinary SDK generation span only when the caller runs
+the model directly through `Runner`; `run_scenario()` continues to disable tracing. AgentRunProof
+does not evaluate span payloads or act as a tracing backend.
 
-The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.2 runtime claims.
+SDK 0.22 deliberately replaces a terminal tool result rejected by an output guardrail before
+durable session replay. The selected guardrail-history scenario therefore requires the linked
+call/output pair to remain present while the rejected raw tool result is absent. It does not bind
+the SDK's human-readable replacement text. SDK 0.20 and 0.21 retain the historical raw-output
+expectation used by the pinned 0.19.x regression boundary.
+
+The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.3 runtime claims.
 
 ## Required invariants
 
@@ -123,4 +130,6 @@ AgentRunProof. The project therefore remains external to the SDK.
 - **Gate 3 — external defect:** a current external failure is reproduced and reported accurately without overstating impact.
 - **Gate 4 — recognition:** an upstream maintainer or independent adopter cites, runs, reuses, documents, or substantively responds to AgentRunProof evidence.
 
-PyPI publication requires Gates 0 through 2. The long-term project goal completes after Gate 4.
+PyPI publication requires Gates 0 through 2. Each compatibility-window release requires a fresh
+versioned comparison bundle bound to that release's clean source and wheel; an older release's
+immutable evidence cannot satisfy this gate. The long-term project goal completes after Gate 4.

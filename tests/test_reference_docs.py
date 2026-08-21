@@ -55,3 +55,9 @@ def test_documentation_entry_points_link_to_the_reference() -> None:
     assert "](api-reference.md)" in index
     assert "](cli-reference.md)" in index
     assert "/blob/main/docs/README.md" in pyproject
+
+
+def test_api_reference_tracks_the_package_version() -> None:
+    reference = (ROOT / "docs/api-reference.md").read_text(encoding="utf-8")
+
+    assert f'__version__: str = "{agentrunproof.__version__}"' in reference

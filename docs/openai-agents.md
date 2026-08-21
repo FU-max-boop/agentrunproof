@@ -23,10 +23,11 @@ SDK regression test for the fix.
 
 ## Compatibility
 
-AgentRunProof `0.2.0` declares `openai-agents>=0.20.0,<0.22` on Python 3.10 through 3.14. The
-packaged wheel is tested in every Python cell against exact SDK 0.20.0 and 0.21.0 installations;
-those are the verified release baselines. Other patch, prerelease, or source revisions are not
-individually verified support cells.
+The AgentRunProof 0.3.0 release candidate declares `openai-agents>=0.20.0,<0.23` on Python 3.10
+through 3.14. Its packaged-wheel acceptance matrix covers exact SDK 0.20.0, 0.21.0, and 0.22.0
+installations. Other patch, prerelease, or source revisions are not individually verified support
+cells. The latest published AgentRunProof release is still 0.2.0 and does not declare SDK 0.22
+support.
 
 Install the released package in a fresh environment:
 
@@ -40,6 +41,13 @@ mkdir -p build
 Built-in scenarios use deterministic local responses and make zero provider requests. They require
 no API key. This guarantee covers the built-in scenarios, not arbitrary user-supplied Python code;
 package installation may still contact the configured package index.
+
+To exercise the 0.3.0 candidate against its new exact baseline from a source checkout, install the
+checkout and SDK together instead of naming a nonexistent PyPI release:
+
+```bash
+python -m pip install -e . "openai-agents==0.22.0"
+```
 
 ## Three focused checks
 
@@ -78,9 +86,9 @@ executing the effect more than once.
 
 ## Provider-free tracing for integration tests
 
-SDK 0.21 supplies the public `agents.testing.ScriptedModel`; AgentRunProof delegates deterministic
-execution to it when available and preserves a public-`Model` fallback on SDK 0.20. Both paths can
-emit the SDK's normal generation span explicitly:
+Supported SDKs 0.21 and 0.22 supply the public `agents.testing.ScriptedModel`; AgentRunProof
+delegates deterministic execution to it when available and preserves a public-`Model` fallback on
+SDK 0.20. Both paths can emit the SDK's normal generation span explicitly:
 
 ```python
 from agents import Agent, Runner
