@@ -57,7 +57,7 @@ test = [
 ]
 dev = [
   "build>=1.2",
-  "mypy>=1.15",
+  "mypy>=2.3.0",
   "ruff>=0.12",
   "twine>=7",
 ]
