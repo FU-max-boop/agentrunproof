@@ -23,9 +23,10 @@ SDK regression test for the fix.
 
 ## Compatibility
 
-The AgentRunProof 0.3.0 source contract declares `openai-agents>=0.20.0,<0.23` on Python 3.10 through 3.14. Its
-packaged-wheel acceptance matrix covers exact SDK 0.20.0, 0.21.0, and 0.22.0 installations. Other
-patch, prerelease, or source revisions are not individually verified support cells.
+The released AgentRunProof 0.3.0 contract declares `openai-agents>=0.20.0,<0.23` on Python 3.10
+through 3.14. Its packaged-wheel acceptance matrix covers exact SDK 0.20.0, 0.21.0, and 0.22.0
+installations. Other patch, prerelease, or source revisions are not individually verified support
+cells.
 
 Install the released package in a fresh environment:
 
@@ -40,12 +41,13 @@ Built-in scenarios use deterministic local responses and make zero provider requ
 no API key. This guarantee covers the built-in scenarios, not arbitrary user-supplied Python code;
 package installation may still contact the configured package index.
 
-To exercise the 0.3.0 source contract against SDK 0.22 before its immutable release and PyPI pages
-exist, install the checkout and exact SDK together:
+To reproduce an exact 0.3.0 acceptance cell, pin the package and SDK together:
 
 ```bash
-python -m pip install -e . "openai-agents==0.22.0"
+python -m pip install "agentrunproof==0.3.0" "openai-agents==0.22.0"
 ```
+
+Substitute SDK 0.20.0 or 0.21.0 to exercise the other packaged baselines.
 
 ## Three focused checks
 

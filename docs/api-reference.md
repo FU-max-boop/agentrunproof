@@ -1,6 +1,6 @@
 # Python API reference
 
-This page documents the import surface exported by AgentRunProof 0.2. Import ordinary scenario
+This page documents the import surface exported by AgentRunProof 0.3.0. Import ordinary scenario
 building and certificate helpers from `agentrunproof`. The separate `agentrunproof.current`
 namespace is an advanced, schema-bound API for reproducing the repository's canonical current and
 released-versus-upstream evidence bundles.

@@ -21,36 +21,14 @@ checkout's `pyproject.toml`; every dependency needed by this focused test is sup
 
 ```bash
 uv run --isolated --no-project --python 3.12 \
-  --with "agentrunproof==0.2.0" \
-  --with "openai-agents==0.20.0" \
-  --with "pytest>=8,<10" \
-  --with "pytest-asyncio>=0.24" \
-  -- python -m pytest -q examples/ci_adoption/test_runner_contract.py
-```
-
-Change only the SDK pin to exercise the other packaged baseline:
-
-```bash
-uv run --isolated --no-project --python 3.12 \
-  --with "agentrunproof==0.2.0" \
-  --with "openai-agents==0.21.0" \
-  --with "pytest>=8,<10" \
-  --with "pytest-asyncio>=0.24" \
-  -- python -m pytest -q examples/ci_adoption/test_runner_contract.py
-```
-
-The 0.3.0 source contract adds exact SDK 0.22.0 coverage. Pin `agentrunproof==0.3.0` downstream
-only after its immutable release and PyPI pages exist. Before then, the source contract can be
-tested without changing project metadata:
-
-```bash
-uv run --isolated --no-project --python 3.12 \
-  --with-editable . \
+  --with "agentrunproof==0.3.0" \
   --with "openai-agents==0.22.0" \
   --with "pytest>=8,<10" \
   --with "pytest-asyncio>=0.24" \
   -- python -m pytest -q examples/ci_adoption/test_runner_contract.py
 ```
+
+Change only the SDK pin to exercise the other packaged baselines: exact 0.20.0 or 0.21.0.
 
 For a downstream test that imports a `src/`-layout package, add `--with-editable .` before `--`.
 That installs the checkout only inside the same temporary environment; it still does not alter the
@@ -60,8 +38,8 @@ the adapter, name the applicable extra, for example `--with-editable ".[openai]"
 ## Minimal GitHub Actions job
 
 This job is deliberately separate from the downstream project's normal dependency installation.
-It grants read-only repository permission, pins the action and tool revisions, and tests the two
-exact SDK releases covered by the published AgentRunProof 0.2.0 contract.
+It grants read-only repository permission, pins the action and tool revisions, and tests the three
+exact SDK releases covered by the published AgentRunProof 0.3.0 contract.
 
 ```yaml
 name: OpenAI Agents Runner contract
@@ -82,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sdk-version: ["0.20.0", "0.21.0"]
+        sdk-version: ["0.20.0", "0.21.0", "0.22.0"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,7 +75,7 @@ jobs:
         run: |
           uv run --isolated --no-project --python 3.12 \
             --with-editable . \
-            --with "agentrunproof==0.2.0" \
+            --with "agentrunproof==0.3.0" \
             --with "openai-agents==${{ matrix.sdk-version }}" \
             --with "pytest>=8,<10" \
             --with "pytest-asyncio>=0.24" \
@@ -125,18 +103,16 @@ the test intentionally covers an integration boundary.
 
 ## Dependency and release trust
 
-- Pin `agentrunproof==0.2.0` and an exact `openai-agents` release in the isolated job. Its supported
-  range is `openai-agents>=0.20.0,<0.22`; 0.20.0 and 0.21.0 are the exact packaged CI baselines.
-- The 0.3.0 source contract expands that declaration to `openai-agents>=0.20.0,<0.23` and adds an
-  exact 0.22.0 packaged-wheel cell on every supported Python. Switch downstream pins and matrices
-  after the final release, checksums, and release-bound evidence are public.
-- The immutable [v0.2.0 GitHub release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.2.0)
+- Pin `agentrunproof==0.3.0` and an exact `openai-agents` release in the isolated job. Its supported
+  range is `openai-agents>=0.20.0,<0.23`; 0.20.0, 0.21.0, and 0.22.0 are the exact packaged CI
+  baselines.
+- The immutable [v0.3.0 GitHub release](https://github.com/FU-max-boop/agentrunproof/releases/tag/v0.3.0)
   publishes wheel and sdist SHA-256 values in `SHA256SUMS`. Its release workflow re-downloads those
   assets, compares them byte-for-byte with a rebuild from the tagged source, and smoke-tests the
   wheel before the same verified files are sent to PyPI through OIDC trusted publishing.
-- The v0.2.0 wheel SHA-256 is
-  `e393e98bf797cc10f07ea151ec6fffd3b1ebbb21307256309e08f11e97a27d51`; its sdist SHA-256 is
-  `c0ad9c2aeb425cfcaff81b6daeee9c9ded069397dfc7a3319fda28f9842f2ace`.
+- The v0.3.0 wheel SHA-256 is
+  `7375d7eab4ad42377ceb9f7387e1151cc30dad87538d4f518da21afe7f41901f`; its sdist SHA-256 is
+  `f04624893d54d6d6708a5d24f9079b5c4e4dd3d1d2364068e73cd86ae9d5c313`.
 - A repository with a lock or hash policy should resolve this isolated closure with its normal
   dependency-review process and commit the resulting test-only lock data. The short `uv run`
   pattern above intentionally does not create a lockfile.
