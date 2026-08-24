@@ -103,10 +103,14 @@ multi-phase `RunState` checks, cross-version evidence, and content-addressed rec
 - recursive approval routing after a public `RunState.to_json()` / `RunState.from_json()` boundary,
   with one exact approval applied to the restored interruption;
 - per-phase tool-count deltas, scenario probes, and replay of persisted tool history.
+- one filtered handoff/session boundary where tool records are removed before history nesting, the
+  specialist sees neither typed tool items nor serialized tool payloads, the durable session keeps
+  both complete tool call/output pairs, and lure guardrails at both agents bind source-input and
+  target-output ownership without retaining caller-defined history wrappers;
 - output-guardrail tool-pair durability, including SDK 0.22's removal of a rejected raw tool result
   from durable replay without depending on its replacement wording.
 
-The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Generic handoff, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
+The terminal-event profile does not claim token/delta, timing, backpressure, or cancellation-stream equivalence. Multi-hop handoff graphs, arbitrary handoff filters, retry, cancellation, max-turn, generalized snapshot-isolation, and task-cleanup contracts remain future scenarios unless a certificate explicitly names and observes them.
 
 AgentRunProof checks SDK runtime semantics. It is not a model-quality evaluator, tracing backend,
 HTTP recorder, hosted service, or general agent framework.
@@ -178,7 +182,7 @@ and the final recursive and serialized PASS results by wheel hash and Git proven
 release carries a freshly reproduced bundle for the same causal ladder, bound to the v0.2.0
 harness wheel.
 
-For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The built-in scenario and the two multi-phase historical scenarios are executable examples.
+For library scenarios, the top-level package exposes `Scenario`/`ScenarioCase` for one run and `ScenarioPlan`/`ScenarioPhase`/`ResumeInput`/`StateProbe` for ordered multi-run contracts, together with `DeterministicModel`, `RecordingSession`, `run_scenario()`, and certificate helpers. The packaged built-ins are executable examples of tool/session parity, filtered handoff ownership, and durable approval routing.
 
 ## Historical falsification matrix
 

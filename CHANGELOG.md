@@ -2,6 +2,14 @@
 
 All notable changes to AgentRunProof will be documented here.
 
+## Unreleased
+
+- Add a provider-free handoff/session parity scenario that composes a durable prior tool pair, one
+  exactly-once current tool call, tool removal before history nesting, source/target guardrails,
+  and stream/non-stream symmetry. Its phase probes bind both typed and serialized tool exclusion
+  from the specialist view separately from the session's complete causal history, use lure
+  guardrails at both agents, and restore any caller-defined history-wrapper configuration.
+
 ## 0.3.0 - 2026-08-21
 
 - Extend the declared dependency window to `openai-agents>=0.20.0,<0.23` and add exact 0.22.0

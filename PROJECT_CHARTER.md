@@ -30,6 +30,13 @@ Python 3.10 through 3.14. Its acceptance matrix installs the packaged artifact a
 0.20.0, 0.21.0, and 0.22.0; a Python/SDK cell is claimed as tested only after that exact CI cell
 passes.
 
+The current unreleased development contract additionally selects one handoff/session boundary:
+full function-tool causality remains durable while a specialist receives a structured, tool-free
+model view produced by removing tool records before nesting history, with source/target guardrail
+ownership bound by guardrails installed at both ends. Fixed synthetic wrapper text is isolated to
+the synchronous transform and the caller's prior wrapper configuration is restored. This is not
+part of the published v0.3.0 claim.
+
 v0.3 retains certificate v1, the v0.1 runtime scenarios, and v0.2's explicit
 `DeterministicModel(..., emit_traces=True)` interoperability path: supported SDKs 0.21 and 0.22
 delegate to the public `agents.testing.ScriptedModel`, while SDK 0.20 uses the existing
@@ -43,7 +50,7 @@ call/output pair to remain present while the rejected raw tool result is absent.
 the SDK's human-readable replacement text. SDK 0.20 and 0.21 retain the historical raw-output
 expectation used by the pinned 0.19.x regression boundary.
 
-The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Generic handoff execution, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.3 runtime claims.
+The terminal-event profile emits `response.output_item.done` and `response.completed`; it does not cover token/delta timing, backpressure, or stream cancellation. Multi-hop handoff graphs, arbitrary handoff filters, retries, cancellation, max-turn cleanup, generalized object snapshot isolation, and arbitrary guardrail contracts remain planned scenarios rather than v0.3 runtime claims.
 
 ## Required invariants
 

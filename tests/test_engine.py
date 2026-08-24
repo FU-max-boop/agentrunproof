@@ -15,6 +15,7 @@ from agents import (
 from agentrunproof._canonical import sha256_hex
 from agentrunproof.builtins import (
     BASIC_TOOL_SESSION_PARITY,
+    HANDOFF_SESSION_FILTERED_VIEW_PARITY,
     RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING,
     RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_SERIALIZATION,
     RUNSTATE_SIBLING_APPROVAL_ISOLATION,
@@ -55,6 +56,68 @@ async def test_builtin_tool_session_scenario_passes_every_invariant() -> None:
     assert all(
         observation.remaining_model_steps == 0 for observation in proof.observations.values()
     )
+
+
+@pytest.mark.asyncio
+async def test_handoff_session_scenario_binds_filtered_view_and_durable_history() -> None:
+    proof = await run_scenario(HANDOFF_SESSION_FILTERED_VIEW_PARITY)
+
+    assert proof.status == "PASS"
+    assert [result.name for result in proof.invariant_results] == [
+        "execution_outcome",
+        "phase_contract",
+        "stream_parity",
+        "tool_linkage",
+        "exactly_once",
+        "model_script_consumed",
+        "session_replay",
+    ]
+    assert all(result.status == "PASS" for result in proof.invariant_results)
+    for observation in proof.observations.values():
+        assert observation.final_output == "resolved-alpha"
+        assert observation.last_agent == "Domain Specialist"
+        assert observation.tool_counts == {"lookup_case": 1}
+        assert len(observation.model_calls) == 3
+        phase = observation.phases[0]
+        assert phase.probes_after["guardrail_configuration"] == {
+            "source_input": 1,
+            "source_output": 1,
+            "target_input": 1,
+            "target_output": 1,
+        }
+        guardrail_events = phase.probes_after["guardrail_events"]
+        assert guardrail_events[0]["stage"] == "input"
+        assert guardrail_events[0]["agent"] == "Triage Agent"
+        assert "prior-tool-alpha" in guardrail_events[0]["payload"]
+        assert "current-user-alpha" in guardrail_events[0]["payload"]
+        assert guardrail_events[1] == {
+            "stage": "output",
+            "agent": "Domain Specialist",
+            "payload": "resolved-alpha",
+        }
+        assert phase.probes_after["model_tool_visibility"][-1] == []
+        assert phase.probes_after["session_tool_history"] == [
+            "function_call",
+            "function_call_output",
+            "function_call",
+            "function_call_output",
+        ]
+        assert phase.probes_after["specialist_context"] == {
+            "prior-user-alpha": 1,
+            "prior-answer-alpha": 1,
+            "current-user-alpha": 1,
+            "route-domain-alpha": 1,
+            "<CONVERSATION HISTORY>": 1,
+            "prior_lookup": 0,
+            "prior-alpha": 0,
+            "prior-tool-alpha": 0,
+            "lookup_case": 0,
+            "lookup-alpha": 0,
+            "risk-low-alpha": 0,
+            "transfer_to_domain_specialist": 0,
+            "handoff-domain": 0,
+        }
+        assert phase.probes_after["wrapper_restoration"] == [True]
 
 
 def test_sibling_decisions_require_one_direct_undecided_subject() -> None:

@@ -10,6 +10,7 @@ def test_cli_lists_and_runs_builtin_scenario(tmp_path: Path, capsys) -> None:
     assert main(["list-scenarios"]) == 0
     listed = capsys.readouterr().out
     assert "basic-tool-session-parity" in listed
+    assert "handoff-session-filtered-view-parity" in listed
     assert "runstate-recursive-agent-tool-approval-serialization" in listed
     assert "runstate-recursive-agent-tool-approval-routing" in listed
     assert "runstate-sibling-approval-isolation" in listed
@@ -52,6 +53,35 @@ def test_cli_emits_a_checkable_state_fork_certificate(tmp_path: Path, capsys) ->
     assert f"{payload['overall_status']} runstate-sibling-approval-isolation" in (
         capsys.readouterr().out
     )
+    assert main(["check-certificate", str(certificate)]) == 0
+    assert "VALID sha256:" in capsys.readouterr().out
+
+
+def test_cli_emits_a_checkable_handoff_session_certificate(tmp_path: Path, capsys) -> None:
+    certificate = tmp_path / "handoff-session.json"
+
+    assert (
+        main(
+            [
+                "probe",
+                "handoff-session-filtered-view-parity",
+                "--certificate",
+                str(certificate),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(certificate.read_text(encoding="utf-8"))
+    assert payload["scenario"]["id"] == "handoff-session-filtered-view-parity"
+    assert payload["overall_status"] == "PASS"
+    assert payload["observations"]["non_streaming"]["phases"][0]["probes_after"][
+        "guardrail_events"
+    ][-1] == {
+        "stage": "output",
+        "agent": "Domain Specialist",
+        "payload": "resolved-alpha",
+    }
+    assert "PASS handoff-session-filtered-view-parity" in capsys.readouterr().out
     assert main(["check-certificate", str(certificate)]) == 0
     assert "VALID sha256:" in capsys.readouterr().out
 

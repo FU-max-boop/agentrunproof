@@ -58,6 +58,16 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   redacted replay without matching replacement prose. The full hosted Python 3.10–3.14 by SDK
   0.20.0/0.21.0/0.22.0 matrix passed, the fresh release-bound v3 bundle passed independent audit,
   and the immutable GitHub Release and PyPI wheel/sdist are byte-identical.
+- [x] (2026-08-24) Validated one provider-free handoff/session boundary across SDK 0.20.0, 0.21.0,
+  and 0.22.0: full tool causality must remain durable in the session while the specialist sees a
+  tool-free filtered model input, guardrail ownership and exactly-once effects remain explicit,
+  and streaming/non-streaming observations stay symmetric. Fresh isolated installs of a locally
+  built wheel passed all seven declared invariants and strict certificate checking in every SDK
+  cell; these development certificates are not canonical release evidence.
+- [x] (2026-08-24) Opened scenario proposal
+  [#27](https://github.com/FU-max-boop/agentrunproof/issues/27) with the public counterexample,
+  exact observations, supported-version boundary, negative controls, and release limitations before
+  committing or proposing the implementation branch.
 
 ## Milestones
 
@@ -112,6 +122,27 @@ The milestone is complete when the charter's Gate 4 is satisfied.
 - OpenAI Agents 0.22 intentionally replaces a tool result rejected by a terminal output guardrail
   before saving and replaying the session. The call/output pair and follow-up execution remain
   intact, so compatibility depends on redaction semantics rather than the SDK's replacement text.
+- A provider-free SDK 0.20.0 rehearsal composed prior session tool history, a fresh function-tool
+  call, a safely ordered tool-removal/history-nesting filter, and input/output guardrails in one real Runner
+  execution. Both runtime modes preserved the two complete tool pairs in the session while the
+  specialist model input contained no function-call items. This is sufficient evidence to add one
+  narrowly declared research scenario, but not yet to widen the published compatibility claim.
+- The exact scenario, observation, and invariant projection matched byte-for-byte between SDK
+  0.20.0 and 0.21.0. SDK 0.22.0 added only a null `ModelSettings.timeout` field at each captured
+  model boundary, which intentionally changes the content digest while leaving every declared
+  runtime invariant and scenario-owned probe unchanged.
+- A custom `input_filter` takes precedence over the SDK's automatic handoff-history nesting, so
+  setting both knobs does not compose them. Explicit composition is also order-sensitive:
+  `remove_all_tools(nest_handoff_history(data))` leaves tool payloads embedded in summary text,
+  while `nest_handoff_history(remove_all_tools(data))` produces the intended structured,
+  tool-free specialist view. The scenario binds both typed-item absence and zero textual payload
+  occurrences so a representation change cannot silently weaken the filter claim.
+- Guardrail ownership needs negative controls, not only the callbacks expected to run. Both source
+  and target therefore carry input and output guardrails; the phase contract requires exactly the
+  source-input event over the literal request and the target-output event over the terminal result.
+  The filter also installs fixed synthetic history wrappers only around its synchronous transform,
+  restores the caller's prior global wrappers, and records the successful restoration without
+  serializing any caller-provided wrapper text.
 
 ## Decision Log
 
@@ -169,6 +200,12 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   final and immutable, and PyPI serves the byte-identical audited wheel and sdist. The v3 bundle
   records the 0.20 causal comparison; SDK 0.22 support is established separately by the exact
   packaged-wheel matrix.
+- **2026-08-24 — Selected handoff/session scope extension:** Add one provider-free scenario that
+  composes a single handoff with tool removal before history nesting, a durable session,
+  one exactly-once function tool, and source/target guardrails. Bind its expected boundary through
+  existing phase probes and certificate-v1 fields; do not add a generic workflow abstraction,
+  claim arbitrary handoff-filter conformance, or publish a new compatibility result until a clean
+  commit and canonical CI evidence reproduce the exact 0.20.0/0.21.0/0.22.0 packaged matrix.
 
 ## Outcomes & Retrospective
 

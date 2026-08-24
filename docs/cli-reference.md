@@ -45,6 +45,7 @@ another workspace.
 | Scenario ID | Contract |
 | --- | --- |
 | `basic-tool-session-parity` | One deterministic function-tool call and final output remain coherent across non-streaming and streaming Runner modes. |
+| `handoff-session-filtered-view-parity` | One filtered handoff removes tool records before nesting history, giving the specialist a structured tool-free view while the durable session retains complete tool causality in both Runner modes. |
 | `runstate-recursive-agent-tool-approval-routing` | One flattened approval routes through two `Agent.as_tool` checkpoints while an untouched direct sibling remains pending. |
 | `runstate-recursive-agent-tool-approval-serialization` | One flattened approval survives `RunState` JSON restoration and routes through two `Agent.as_tool` checkpoints. |
 | `runstate-sibling-approval-isolation` | Approving one direct `RunState` sibling does not mutate another sibling created from the same result. |

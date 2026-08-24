@@ -11,8 +11,13 @@ from pathlib import Path
 
 import jsonschema
 import pytest
+from agents.handoffs import (
+    get_conversation_history_wrappers,
+    set_conversation_history_wrappers,
+)
 
 from agentrunproof.builtins import (
+    HANDOFF_SESSION_FILTERED_VIEW_PARITY,
     RUNSTATE_RECURSIVE_AGENT_TOOL_APPROVAL_ROUTING,
     RUNSTATE_SIBLING_APPROVAL_ISOLATION,
 )
@@ -88,6 +93,44 @@ async def test_certificate_is_deterministic_and_matches_json_schema(
     validate_certificate(first)
     schema = json.loads(schema_path().read_text(encoding="utf-8"))
     jsonschema.validate(first, schema)
+
+
+@pytest.mark.asyncio
+async def test_readdressing_cannot_hide_handoff_context_filter_drift() -> None:
+    import agentrunproof.certificate as certificate_module
+
+    certificate = build_certificate(await run_scenario(HANDOFF_SESSION_FILTERED_VIEW_PARITY))
+    validate_certificate(certificate)
+    forged = copy.deepcopy(certificate)
+    for observation in forged["observations"].values():
+        observation["phases"][0]["probes_after"]["specialist_context"]["lookup_case"] = 1
+    forged["scenario"]["normalized_input_sha256"] = certificate_module._normalized_input_digest(
+        scenario_id=forged["scenario"]["id"],
+        revision=forged["scenario"]["revision"],
+        phase_contracts=forged["scenario"]["phase_contracts"],
+        observations=forged["observations"],
+    )
+    forged["certificate_id"] = certificate_module._certificate_id(forged)
+
+    with pytest.raises(CertificateError, match="Invariant results do not match recomputed"):
+        validate_certificate(forged)
+
+
+@pytest.mark.asyncio
+async def test_handoff_certificate_restores_and_excludes_caller_wrappers() -> None:
+    original = get_conversation_history_wrappers()
+    secret = ("__CALLER_SECRET_START__", "__CALLER_SECRET_END__")
+    set_conversation_history_wrappers(start=secret[0], end=secret[1])
+    try:
+        proof = await run_scenario(HANDOFF_SESSION_FILTERED_VIEW_PARITY)
+
+        assert proof.status == "PASS"
+        assert get_conversation_history_wrappers() == secret
+        rendered = certificate_json(build_certificate(proof))
+        assert secret[0] not in rendered
+        assert secret[1] not in rendered
+    finally:
+        set_conversation_history_wrappers(start=original[0], end=original[1])
 
 
 @pytest.mark.asyncio
