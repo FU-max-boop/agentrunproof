@@ -15,6 +15,8 @@ content-addressed JSON certificate.
   real-Runner contract.
 - [Isolated CI adoption guide](ci-adoption.md) provides a test-only downstream integration that
   does not add AgentRunProof to runtime metadata or the project lockfile.
+- [Paid design-partner pilot](design-partner-pilot.md) defines the fixed commercial experiment,
+  customer-owned CI boundary, price, exclusions, and success criteria.
 - [RunState case study](case-study-runstate.md) follows a released failure through upstream fixes
   and independently checkable evidence.
 - [Examples](../examples/README.md) contains copyable local and CI-oriented samples.

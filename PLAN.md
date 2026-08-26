@@ -58,6 +58,12 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   redacted replay without matching replacement prose. The full hosted Python 3.10–3.14 by SDK
   0.20.0/0.21.0/0.22.0 matrix passed, the fresh release-bound v3 bundle passed independent audit,
   and the immutable GitHub Release and PyPI wheel/sdist are byte-identical.
+- [ ] (2026-08-26) Run a bounded paid-design-partner experiment without adding a hosted backend:
+  offer three 14-day pilots at USD 300 each for one private OpenAI Agents workflow in
+  customer-owned GitHub Actions. The recurring commercial gate is one unaffiliated team paying
+  before work begins, completing the pilot, and then prepaying at least one USD 200 continuation
+  month. Stars, clones, package downloads, interviews, free trials, and verbal interest do not
+  satisfy the gate.
 
 ## Milestones
 
@@ -169,6 +175,18 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   final and immutable, and PyPI serves the byte-identical audited wheel and sdist. The v3 bundle
   records the 0.20 causal comparison; SDK 0.22 support is established separately by the exact
   packaged-wheel matrix.
+- **2026-08-26 — Commercial-validation boundary:** Do not build a dashboard, scheduler, hosted
+  runner, multi-tenant storage, billing integration, or broader framework support before a paid
+  pilot. The initial service uses the released package for one sanitized standard-text workflow
+  and two different preverified SDK baselines from 0.20.0, 0.21.0, and 0.22.0 in customer-owned
+  GitHub Actions. Delivery is a customer-applied patch based only on public or explicitly approved
+  synthetic material; private repository content is not provided to the maintainer or external AI
+  tools. The founding pilot is USD 300 prepaid for 14 days and at most eight engineering hours,
+  including one triage capped at two hours. An optional continuation is USD 200 per month and at
+  most three engineering hours for the same repository, one scheduled compatibility matrix, one
+  monthly upgrade review, and one triage capped at 90 minutes. There is no automatic renewal.
+  Recurring demand remains unvalidated until an unaffiliated team completes the pilot and prepays
+  at least one continuation month.
 
 ## Outcomes & Retrospective
 
