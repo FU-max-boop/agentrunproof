@@ -1,0 +1,105 @@
+name: Paid design-partner pilot
+description: Check whether one private OpenAI Agents workflow fits the 7-day compatibility pilot
+title: "[Pilot]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read the [complete fixed scope and data boundary](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/design-partner-pilot.md) first. This is a public intake for the USD 20, 7-day design-partner pilot. Do not paste private code, credentials, prompts, customer data, production traces, or certificates. An issue is not an order; scope and payment are confirmed separately before implementation work begins.
+  - type: input
+    id: organization
+    attributes:
+      label: Team or public project
+      description: Name the team or link a public project. Write "private team" if neither can be public.
+    validations:
+      required: true
+  - type: dropdown
+    id: sdk-version
+    attributes:
+      label: Current OpenAI Agents SDK version
+      options:
+        - openai-agents 0.20.0
+        - openai-agents 0.21.0
+        - openai-agents 0.22.0
+    validations:
+      required: true
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Python version
+      options:
+        - Python 3.10
+        - Python 3.11
+        - Python 3.12
+        - Python 3.13
+        - Python 3.14
+    validations:
+      required: true
+  - type: dropdown
+    id: workflow-boundary
+    attributes:
+      label: Primary runtime boundary
+      options:
+        - Session replay or persistence
+        - Function-tool linkage or exactly-once effects
+        - Approval, interruption, or RunState resume
+        - Guardrail durability
+        - Streaming and non-streaming parity
+        - Another public Runner boundary
+    validations:
+      required: true
+  - type: textarea
+    id: invariant
+    attributes:
+      label: Costly invariant
+      description: In one or two synthetic sentences, what behavior must remain true after an SDK upgrade?
+      placeholder: After resuming one approved interruption, the protected synthetic tool runs exactly once and the untouched sibling remains pending.
+    validations:
+      required: true
+  - type: checkboxes
+    id: execution-platform
+    attributes:
+      label: Execution platform
+      options:
+        - label: The workflow can run on customer-owned Ubuntu 24.04 GitHub Actions.
+          required: true
+        - label: The workflow uses the standard text Runner, not Realtime, Voice, Sandbox, or MCP wire protocols.
+          required: true
+  - type: dropdown
+    id: candidate-upgrade
+    attributes:
+      label: Candidate SDK upgrade
+      description: Choose a different exact version from the current SDK version.
+      options:
+        - openai-agents 0.20.0
+        - openai-agents 0.21.0
+        - openai-agents 0.22.0
+    validations:
+      required: true
+  - type: input
+    id: safe-contact
+    attributes:
+      label: Safe contact route
+      description: A public business email, website contact page, or GitHub handle. Do not provide credentials or private links.
+      placeholder: team@example.com or @github-handle
+    validations:
+      required: true
+  - type: checkboxes
+    id: commercial-fit
+    attributes:
+      label: Scope and commercial fit
+      options:
+        - label: If the written scope fits, the team can prepay USD 20 for the 7-day pilot.
+          required: true
+        - label: The pilot covers one repository, one sanitized workflow mapped to an existing contract shape, two preverified exact SDK baselines, and at most 90 engineering minutes.
+          required: true
+        - label: The current and candidate SDK selections are different and are one of the preverified 0.20.0, 0.21.0, or 0.22.0 baselines.
+          required: true
+        - label: Delivery is a customer-applied patch; no private repository content will be provided to the maintainer or external AI tools.
+          required: true
+        - label: I understand this is not an SLA, security audit, hosted dashboard, or guarantee that every defect will be detected.
+          required: true
+        - label: I removed private code, credentials, prompts, customer data, production traces, and certificates from this public issue.
+          required: true

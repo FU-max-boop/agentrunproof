@@ -60,6 +60,30 @@ unverifiable evidence. See the
 and the
 [OpenAI Agents integration guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/openai-agents.md).
 
+## Paid design-partner pilot
+
+AgentRunProof is testing a small managed service for teams that depend on a private standard-text
+OpenAI Agents `Runner` workflow: a 7-day, fixed-scope compatibility check in customer-owned GitHub
+Actions. It maps one sanitized workflow to an already-supported deterministic contract, exercises
+two different preverified SDK baselines from 0.20.0, 0.21.0, and 0.22.0, and delivers copyable CI
+commands plus a short result report. It does not include bespoke adapters, a defect fix, or an
+open-ended regression investigation.
+
+The founding-pilot price is **USD 20 paid before work begins** for up to 90 minutes of engineering,
+with no automatic renewal and three slots available. The default delivery uses only public or
+customer-approved synthetic material and does not require private repository access. Private
+repository content, production prompts, API keys, raw customer data, and private certificates are
+not shared with the maintainer or external AI tools. This is a low-friction paid-demand experiment,
+not proof of sustainable pricing, a hosted AgentRunProof feature, an uptime SLA, a security audit,
+or a guarantee that every SDK defect will be found.
+
+Read the exact
+[scope, deliverables, and data boundary](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/design-partner-pilot.md),
+then use the
+[design-partner intake](https://github.com/FU-max-boop/agentrunproof/issues/new?template=design-partner-pilot.yml)
+if the fixed pilot fits. Do not put private code, credentials, prompts, or production traces in the
+public issue.
+
 Maintaining a downstream library? The
 [isolated, test-only CI guide](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/ci-adoption.md)
 provides a copyable real-`Runner` contract test and an ephemeral `uv` matrix. The published
