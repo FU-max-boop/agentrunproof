@@ -63,19 +63,19 @@ and the
 ## Paid design-partner pilot
 
 AgentRunProof is testing a small managed service for teams that depend on a private standard-text
-OpenAI Agents `Runner` workflow: a 14-day, fixed-scope compatibility pilot in customer-owned
-GitHub Actions. It turns one sanitized workflow into a deterministic baseline, exercises two
-different preverified SDK baselines from 0.20.0, 0.21.0, and 0.22.0, installs a pull-request and
-manual compatibility gate, and includes one bounded regression triage. An optional nightly run
-checks customer-code or environment drift against those fixed pins; it does not discover or adopt
-new SDK releases automatically.
+OpenAI Agents `Runner` workflow: a 7-day, fixed-scope compatibility check in customer-owned GitHub
+Actions. It maps one sanitized workflow to an already-supported deterministic contract, exercises
+two different preverified SDK baselines from 0.20.0, 0.21.0, and 0.22.0, and delivers copyable CI
+commands plus a short result report. It does not include bespoke adapters, a defect fix, or an
+open-ended regression investigation.
 
-The founding-pilot price is **USD 300 paid before work begins** for up to eight engineering hours,
-with no automatic renewal and three slots available. The default delivery is a customer-applied
-patch based only on public or customer-approved synthetic material. Private repository content,
-production prompts, API keys, raw customer data, and private certificates are not shared with the
-maintainer or external AI tools. This is a service experiment, not a hosted AgentRunProof feature,
-uptime SLA, security audit, or guarantee that every SDK defect will be found.
+The founding-pilot price is **USD 20 paid before work begins** for up to 90 minutes of engineering,
+with no automatic renewal and three slots available. The default delivery uses only public or
+customer-approved synthetic material and does not require private repository access. Private
+repository content, production prompts, API keys, raw customer data, and private certificates are
+not shared with the maintainer or external AI tools. This is a low-friction paid-demand experiment,
+not proof of sustainable pricing, a hosted AgentRunProof feature, an uptime SLA, a security audit,
+or a guarantee that every SDK defect will be found.
 
 Read the exact
 [scope, deliverables, and data boundary](https://github.com/FU-max-boop/agentrunproof/blob/main/docs/design-partner-pilot.md),

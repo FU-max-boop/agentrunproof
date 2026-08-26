@@ -59,11 +59,12 @@ Deliver a standalone, installable tool that deterministically checks OpenAI Agen
   0.20.0/0.21.0/0.22.0 matrix passed, the fresh release-bound v3 bundle passed independent audit,
   and the immutable GitHub Release and PyPI wheel/sdist are byte-identical.
 - [ ] (2026-08-26) Run a bounded paid-design-partner experiment without adding a hosted backend:
-  offer three 14-day pilots at USD 300 each for one private OpenAI Agents workflow in
-  customer-owned GitHub Actions. The recurring commercial gate is one unaffiliated team paying
-  before work begins, completing the pilot, and then prepaying at least one USD 200 continuation
-  month. Stars, clones, package downloads, interviews, free trials, and verbal interest do not
-  satisfy the gate.
+  offer three 7-day compatibility checks at USD 20 each for one sanitized OpenAI Agents workflow
+  in customer-owned GitHub Actions, capped at 90 engineering minutes. The paid-signal gate is one
+  unaffiliated team paying before work begins, completing the check, and then prepaying at least
+  one USD 20 continuation month. This intentionally tests low-friction willingness to pay, not
+  sustainable unit economics. Stars, clones, package downloads, interviews, free trials, and
+  verbal interest do not satisfy the gate.
 
 ## Milestones
 
@@ -181,12 +182,13 @@ The milestone is complete when the charter's Gate 4 is satisfied.
   and two different preverified SDK baselines from 0.20.0, 0.21.0, and 0.22.0 in customer-owned
   GitHub Actions. Delivery is a customer-applied patch based only on public or explicitly approved
   synthetic material; private repository content is not provided to the maintainer or external AI
-  tools. The founding pilot is USD 300 prepaid for 14 days and at most eight engineering hours,
-  including one triage capped at two hours. An optional continuation is USD 200 per month and at
-  most three engineering hours for the same repository, one scheduled compatibility matrix, one
-  monthly upgrade review, and one triage capped at 90 minutes. There is no automatic renewal.
-  Recurring demand remains unvalidated until an unaffiliated team completes the pilot and prepays
-  at least one continuation month.
+  tools. The founding pilot is USD 20 prepaid for 7 days and at most 90 engineering minutes. It
+  maps the workflow to an existing supported contract, runs two fixed SDK baselines, and returns
+  copyable CI commands plus a short report; bespoke adapters, defect fixes, and open-ended triage
+  are excluded. An optional continuation is USD 20 per month and at most 30 engineering minutes
+  for one rerun of the same frozen contract plus a short result note. There is no automatic
+  renewal. Completion plus one prepaid continuation is a paid-demand signal only; this cohort does
+  not validate sustainable pricing or labor economics.
 
 ## Outcomes & Retrospective
 
